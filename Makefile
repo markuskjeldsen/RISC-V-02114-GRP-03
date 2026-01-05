@@ -4,10 +4,10 @@ doit:
 
 # Run the test
 test:
-    sbt "testOnly test"
+    $(MAKE) CC=riscv64-unknown-elf -C tests
+    sbt test
 
-#$(MAKE) CC=riscv64-unknown-elf -C tests
-#sbt test
+#sbt "testOnly helloworldTest"
 
 slides:
 	marp --allow-local-files --pdf README.md

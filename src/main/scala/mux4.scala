@@ -22,6 +22,3 @@ class mux4() extends Module {
       is("b11".U) { io.y := io.a3 }
     }
 }
-
-
-

@@ -1,7 +1,7 @@
 import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
 
-class test extends AnyFlatSpec with ChiselScalatestTester {
+class helloworldTest extends AnyFlatSpec with ChiselScalatestTester {
   "HelloWorld " should "pass" in {
     test(new HelloWorld(50000, 9600)).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       // Increase timeout to 5000 cycles
