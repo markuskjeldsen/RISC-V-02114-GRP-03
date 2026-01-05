@@ -11,7 +11,7 @@ object HelloWorld extends App {
   )
 }
 
-/** Example circuit using the [[MemoryMappedUart]] and the [[StringStreamer]] to send out "Hello World!"
+/** Example circuit using the [[MemoryMappedUart]] and the [[StringStreamer]] to send out "Hello World!", im adding a small test commit
  * @param freq The frequency of the clock
  * @param baud The baud rate of the UART
  * */
