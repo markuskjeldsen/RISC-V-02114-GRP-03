@@ -28,7 +28,7 @@ See the `Makefile` for the hardware and test targets.
  * Build your **own** RISC-V microprocessor
  * Run **your** processor in your Basys3 board
  * This is a (relatively) new 3 weeks course
- * I am exciting to see you building a RISC-V processor
+ * I am exciting to see you building a RISC-V processo
 
 ## Introduction Round
 
