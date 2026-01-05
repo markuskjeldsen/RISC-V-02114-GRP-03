@@ -5,13 +5,13 @@ class Multiplexer4() extends Module {
     val io = IO(new Bundle {
         val sel = Input(UInt(2.W))
 
-        val a0 = Input(UInt(8.W))
-        val a1 = Input(UInt(8.W))
-        val a2 = Input(UInt(8.W))
-        val a3 = Input(UInt(8.W))
+        val a0 = Input(UInt(32.W))
+        val a1 = Input(UInt(32.W))
+        val a2 = Input(UInt(32.W))
+        val a3 = Input(UInt(32.W))
 
 
-        val y = Output(Uint(8.W))
+        val y = Output(UInt(32.W))
     })
 
     io.y := 1.U
