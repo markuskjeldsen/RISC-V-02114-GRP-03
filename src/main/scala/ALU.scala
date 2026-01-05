@@ -11,12 +11,13 @@ class ALU() extends Module{
     val out = Output(SInt(32.W))
 
   })
+
+  io.out := 0.S
   switch(io.sel){
     is("b00".U) { io.out := io.a0 + io.a1 }
     is("b01".U) { io.out := io.a0 - io.a1 }
     is("b10".U) { io.out := io.a0 * io.a1 }
     is("b11".U) { io.out := io.a0 / io.a1 }
-
 
   }
 }
