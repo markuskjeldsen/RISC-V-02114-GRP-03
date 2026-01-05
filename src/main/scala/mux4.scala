@@ -1,7 +1,7 @@
 import chisel3._
 import chisel3.util._
 
-class Multiplexer4() extends Module {
+class mux4() extends Module {
     val io = IO(new Bundle {
         val sel = Input(UInt(2.W))
 
