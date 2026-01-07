@@ -2,27 +2,23 @@ import chisel3._
 import chisel3.util._
 
 
-class MemoryIO extends Bundle {
-  // Instruction fetch
-  val instAddr = Input(UInt(32.W))
-  val inst     = Output(UInt(32.W))
-
-  // Data memory
-  val dataAddr  = Input(UInt(32.W))
-  val writeData = Input(UInt(32.W))
-  val memRead   = Input(Bool())
-  val memWrite  = Input(Bool())
-
-  // RV32I load/store control
-  val memSize = Input(UInt(2.W)) // 00=byte, 01=half, 10=word
-  val memSign = Input(Bool())    // 1=signed, 0=unsigned (loads only)
-
-  val readData = Output(UInt(32.W))
-}
-
-
 class Memory(instMemWords: Int = 4096, dataMemWords: Int = 4096) extends Module {
-  val io = IO(new MemoryIO)
+  val io = IO(new Bundle {
+    val instAddr = Input(UInt(32.W))
+    val inst     = Output(UInt(32.W))
+
+    // Data memory
+    val dataAddr  = Input(UInt(32.W))
+    val writeData = Input(UInt(32.W))
+    val memRead   = Input(Bool())
+    val memWrite  = Input(Bool())
+
+    // RV32I load/store control
+    val memSize = Input(UInt(2.W)) // 00=byte, 01=half, 10=word
+    val memSign = Input(Bool())    // 1=signed, 0=unsigned (loads only)
+
+    val readData = Output(UInt(32.W))
+  })
 
   // Instruction Memory
   val iMem = SyncReadMem(instMemWords, UInt(32.W))
