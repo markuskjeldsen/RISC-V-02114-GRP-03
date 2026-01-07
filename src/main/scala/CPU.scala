@@ -21,7 +21,9 @@ class CPU() extends Module {
   val current_instr = ProgMem.io.instruction
   val current_pc    = io.PRGCNT
 
-  // --- IF/ID PIPELINE REGISTER ---
+
+
+  // --- IF/ID PIPELINE REGISTER --------------------------------------------------------
   val IFID_reg = RegInit(0.U.asTypeOf(new IFIDBundle))
 
   // Update the register with values from Fetch stage
@@ -38,7 +40,7 @@ class CPU() extends Module {
 
 
 
-  // ID/EX PIPELINE REGISTER
+  // --- ID/EX PIPELINE REGISTER --------------------------------------------------------
   val IDEX_reg = RegInit(0.U.asTypeOf(new IDEXBundle))
   IDEX_reg.pc := IFID_reg.pc
   IDEX_reg.instruction := IFID_reg.instruction
@@ -52,7 +54,13 @@ class CPU() extends Module {
 
 
 
-  // EX/MEM
+  // --- EX/MEM --------------------------------------------------------
+  val EXMEM_reg = RegInit(0.U.asTypeOf(new EXMEMBundle))
+  EXMEM_reg.pc := IDEX_reg.pc
+  EXMEM_reg.instruction := IDEX_reg.instruction
+  EXMEM_reg.result := ALU.io.out
+
+
 
 
   // --- MEMORY STAGE ---
@@ -61,11 +69,13 @@ class CPU() extends Module {
 
 
 
-  // MEM/WB
+  // --- MEM/WB --------------------------------------------------------
   // PIPELINE STAGE
 
 
   // --- WRITE BACK ---
+
+
 
 
 }
