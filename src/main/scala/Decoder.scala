@@ -25,5 +25,5 @@ class Decoder() extends Module {
   io.rs1    := rs1
 
   // 3. Convert to SInt.
-  val imm = rawImm.asSInt.pad(32).asUInt
+  val io.imm = rawImm.asSInt.pad(32).asUInt
 }
