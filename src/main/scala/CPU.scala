@@ -51,7 +51,7 @@ class CPU() extends Module {
   IDEX_reg.rs1 := registers.io.rs1
   IDEX_reg.rs2 := registers.io.rs2
 
-
+  IDEX_reg.opcode := opcode
 
   // --- EXECUTE STAGE ---
   // here we execute with the ALU
@@ -68,7 +68,7 @@ class CPU() extends Module {
   EXMEM_reg.instruction := IDEX_reg.instruction
   EXMEM_reg.opcode := IDEX_reg.opcode
   EXMEM_reg.result := ALU.io.out
-
+  EXMEM_reg.opcode := IDEX_reg.opcode
 
 
 

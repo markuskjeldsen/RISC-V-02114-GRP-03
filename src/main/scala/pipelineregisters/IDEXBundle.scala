@@ -9,4 +9,6 @@ class IDEXBundle extends Bundle {
   val rs1          = SInt(32.W)
   val rs2         = SInt(32.W)
   val sel         = UInt(2.W)
+  val imm         = UInt(12.W)
+
 }
