@@ -50,7 +50,6 @@ class CPU() extends Module {
   IDEX_reg.instruction := IFID_reg.instruction
   IDEX_reg.rs1 := registers.io.rs1
   IDEX_reg.rs2 := registers.io.rs2
-
   IDEX_reg.opcode := opcode
 
   // --- EXECUTE STAGE ---
