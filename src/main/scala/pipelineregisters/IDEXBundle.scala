@@ -6,9 +6,9 @@ class IDEXBundle extends Bundle {
   val instruction = UInt(32.W)
   val pc          = UInt(32.W)
   val opcode      = UInt(7.W)
-  val rs1          = SInt(32.W)
-  val rs2         = SInt(32.W)
+  val rs1Data     = UInt(32.W)
+  val rs2Data     = UInt(32.W)
   val sel         = UInt(2.W)
-  val imm         = UInt(12.W)
+  val imm         = UInt(32.W)
 
 }

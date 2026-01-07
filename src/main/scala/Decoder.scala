@@ -3,12 +3,12 @@ import chisel3.util._
 
 class Decoder() extends Module {
   val io = IO(new Bundle {
-    val input = Input(UInt(32.W))
+    val input  = Input(UInt(32.W))
     val opcode = Output(UInt(7.W))
     val rd     = Output(UInt(5.W))
     val func3  = Output(UInt(3.W))
     val rs1    = Output(UInt(5.W))
-    val imm    = Output(SInt(32.W))
+    val imm    = Output(UInt(32.W))
   })
 
   val opcode = io.input(6,0)
@@ -25,5 +25,5 @@ class Decoder() extends Module {
   io.rs1    := rs1
 
   // 3. Convert to SInt.
-  io.imm := rawImm.asSInt
+  val imm = rawImm.asSInt.pad(32).asUInt
 }

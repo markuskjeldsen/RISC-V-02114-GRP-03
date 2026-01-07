@@ -34,12 +34,14 @@ class CPU(ProgPath: String) extends Module {
 
   // --- DECODE STAGE ---
   // Now you access them like this:
-  val opcode = IFID_reg.instruction(6, 0)
-  val pc_in_decode = IFID_reg.pc
+  val decoder = Module(new Decoder())
+  decoder.io.input := IFID_reg.instruction
 
 
   // Registers
   val registers = Module(new Registers())
+  registers.io.rs1 := decoder.io.rs1
+  //registers.io.rs2 := decoder.io.rs2
 
 
 
@@ -48,14 +50,18 @@ class CPU(ProgPath: String) extends Module {
   val IDEX_reg = RegInit(0.U.asTypeOf(new IDEXBundle))
   IDEX_reg.pc := IFID_reg.pc
   IDEX_reg.instruction := IFID_reg.instruction
-  IDEX_reg.rs1 := registers.io.rs1
-  IDEX_reg.rs2 := registers.io.rs2
-  IDEX_reg.opcode := opcode
+  IDEX_reg.rs1Data := registers.io.rs1Data
+  IDEX_reg.rs2Data := registers.io.rs2Data
+  IDEX_reg.opcode := decoder.io.opcode
+  IDEX_reg.imm := decoder.io.imm
+
+
 
   // --- EXECUTE STAGE ---
   // here we execute with the ALU
   val ALU = Module(new ALU())
-  ALU.io.a0 := IDEX_reg.rs1
+  ALU.io.a0 := IDEX_reg.rs1Data
+  ALU.io.a1 := IDEX_reg.imm // only for now, add a mux here later
 
 
 
