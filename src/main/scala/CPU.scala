@@ -6,6 +6,9 @@ import chisel3.util._
 // Import your custom package
 import pipelineregisters._
 
+
+// FETCH // DECODE // EXECUTE // MEMORY // WRITEBACK
+
 class CPU() extends Module {
   val io = IO(new Bundle {
     val PRGCNT = Input(UInt(32.W))
@@ -34,5 +37,5 @@ class CPU() extends Module {
   val pc_in_decode = IFID_reg.pc
 }
 
-  // FETCH // DECODE // EXECUTE // MEMORY // WRITEBACK
+
 
