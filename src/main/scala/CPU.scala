@@ -9,16 +9,16 @@ import pipelineregisters._
 
 // FETCH // DECODE // EXECUTE // MEMORY // WRITEBACK
 
-class CPU() extends Module {
+class CPU(ProgPath: String) extends Module {
   val io = IO(new Bundle {
     val PRGCNT = Input(UInt(32.W))
   })
 
-  val ProgMem = Module(new ProgramMemory())
+  val ProgMem = Module(new Memory(ProgPath))
 
   // --- FETCH STAGE ---
-  ProgMem.io.ProgramCounter := io.PRGCNT
-  val current_instr = ProgMem.io.instruction
+  ProgMem.io.instAddr := io.PRGCNT
+  val current_instr = ProgMem.io.inst
   val current_pc    = io.PRGCNT
 
 

@@ -1,8 +1,9 @@
 import chisel3._
 import chisel3.util._
+import chisel3.util.experimental.loadMemoryFromFile
 
 
-class Memory(instMemWords: Int = 4096, dataMemWords: Int = 4096) extends Module {
+class Memory( ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 4096) extends Module {
   val io = IO(new Bundle {
     val instAddr = Input(UInt(32.W))
     val inst     = Output(UInt(32.W))
@@ -22,6 +23,8 @@ class Memory(instMemWords: Int = 4096, dataMemWords: Int = 4096) extends Module 
 
   // Instruction Memory
   val iMem = SyncReadMem(instMemWords, UInt(32.W))
+
+  chisel3.util.experimental.loadMemoryFromFile(iMem, ProgPath)
 
   val instWordAddr = io.instAddr(31, 2)
 
