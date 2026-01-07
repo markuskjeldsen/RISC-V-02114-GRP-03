@@ -4,14 +4,23 @@ import chisel3.util._
 class decoder() extends Module{
   val io = IO(new Bundle {
     val input = Input(UInt(32.W))
-    val outputReg = Output(Uint(5.W))
-  })
-    val opcode := io.word(6,0)
-    val rd := io.word(11,7)
-    val f3 := io.word(14,12)
-    val rs1 := io.word(19,15)
-    val imm := io.word(31,20)
-    val io.outputReg := rd
+    val opcode = Output(UInt(7.W))
+    val rd = Output(UInt(5.W))
+    val func3 = Output(UInt(3.W))
+    val rs1 = Output(UInt(5.W))
+    val imm = Output(UInt(12.W))
 
+  })
+    val opcode = io.input(6,0)
+    val rd = io.input(11,7)
+    val func3 = io.input(14,12)
+    val rs1 = io.input(19,15)
+    val imm = io.input(31,20)
+
+    io.opcode := opcode
+    io.rd := rd
+    io.func3 := func3
+    io.rs1 := rs1
+    io.imm := imm
 
 }
