@@ -20,12 +20,12 @@ class Memory_load_instructions {
     Cat(Fill(16, half(15)), half)
   }
 
-  def loadWord(addr: UInt, memWord: UInt): UInt = {
+  def LW(addr: UInt, memWord: UInt): UInt = {
     // For LW, the memory already returns the correct 32-bit word
     memWord
   }
 
-  def loadByteUnsigned(addr: UInt, memWord: UInt): UInt = {
+  def LBU(addr: UInt, memWord: UInt): UInt = {
     val byteOffset = addr(1, 0)
     val shifted    = memWord >> (byteOffset << 3)
     val byte       = shifted(7, 0)
@@ -34,7 +34,7 @@ class Memory_load_instructions {
     Cat(0.U(24.W), byte)
   }
 
-  def loadHalfUnsigned(addr: UInt, memWord: UInt): UInt = {
+  def LHU(addr: UInt, memWord: UInt): UInt = {
     val halfOffset = addr(1)
     val shifted    = memWord >> (halfOffset << 4)
     val half       = shifted(15, 0)
