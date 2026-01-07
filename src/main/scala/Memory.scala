@@ -24,7 +24,7 @@ class Memory( ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 40
   // Instruction Memory
   val iMem = SyncReadMem(instMemWords, UInt(32.W))
 
-  chisel3.util.experimental.loadMemoryFromFile(iMem, ProgPath)
+  loadMemoryFromFile(iMem, ProgPath)
 
   val instWordAddr = io.instAddr(31, 2)
 
