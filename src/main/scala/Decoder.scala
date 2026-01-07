@@ -8,9 +8,11 @@ class Decoder() extends Module{
     val rd = Output(UInt(5.W))
     val func3 = Output(UInt(3.W))
     val rs1 = Output(UInt(5.W))
+
     val imm = Output(UInt(12.W))
 
   })
+
     val opcode = io.input(6,0)
     val rd = io.input(11,7)
     val func3 = io.input(14,12)
