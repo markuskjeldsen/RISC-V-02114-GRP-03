@@ -15,6 +15,13 @@ class CPU(ProgPath: String) extends Module {
   })
 
   val ProgMem = Module(new Memory(ProgPath))
+  ProgMem.io.writeData := 0.U
+  ProgMem.io.dataAddr := 0.U
+  ProgMem.io.memSize := 0.U
+  ProgMem.io.memSign := 0.U
+  ProgMem.io.memRead := 0.U
+  ProgMem.io.memWrite := 0.U
+
 
 
   // --- FETCH STAGE ---
