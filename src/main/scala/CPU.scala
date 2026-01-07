@@ -38,17 +38,25 @@ class CPU() extends Module {
   val pc_in_decode = IFID_reg.pc
 
 
+  // Registers
+  val registers = Module(new Registers())
+
+
 
 
   // --- ID/EX PIPELINE REGISTER --------------------------------------------------------
   val IDEX_reg = RegInit(0.U.asTypeOf(new IDEXBundle))
   IDEX_reg.pc := IFID_reg.pc
   IDEX_reg.instruction := IFID_reg.instruction
+  IDEX_reg.rs1 := registers.io.rs1
+  IDEX_reg.rs2 := registers.io.rs2
+
 
 
   // --- EXECUTE STAGE ---
   // here we execute with the ALU
   val ALU = Module(new ALU())
+  ALU.io.a0 := IDEX_reg.rs1
 
 
 
@@ -58,6 +66,7 @@ class CPU() extends Module {
   val EXMEM_reg = RegInit(0.U.asTypeOf(new EXMEMBundle))
   EXMEM_reg.pc := IDEX_reg.pc
   EXMEM_reg.instruction := IDEX_reg.instruction
+  EXMEM_reg.opcode := IDEX_reg.opcode
   EXMEM_reg.result := ALU.io.out
 
 
@@ -71,9 +80,13 @@ class CPU() extends Module {
 
   // --- MEM/WB PIPELINE REGISTER --------------------------------------------------------
   val MEMWB_reg = RegInit(0.U.asTypeOf(new MEMWBBundle))
-
+  MEMWB_reg.pc := EXMEM_reg.pc
+  MEMWB_reg.instruction := EXMEM_reg.instruction
+  MEMWB_reg.opcode := EXMEM_reg.opcode
+  MEMWB_reg.result := EXMEM_reg.result
 
   // --- WRITE BACK ---
+
 
 
 
