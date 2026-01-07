@@ -7,4 +7,5 @@ class MEMWBBundle extends Bundle {
   val pc          = UInt(32.W)
   val opcode      = UInt(7.W)
   val result      = SInt(32.W)
+  val memoryVal   = UInt(32.W)
 }

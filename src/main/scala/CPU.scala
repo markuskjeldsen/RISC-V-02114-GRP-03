@@ -86,7 +86,40 @@ class CPU() extends Module {
   MEMWB_reg.result := EXMEM_reg.result
 
   // --- WRITE BACK ---
+  // if we should write back then do it
 
+  registers.io.rd := MEMWB_reg.instruction(11,7)
+  // Define your data sources (adjust names to match your registers/io)
+  val aluResult = MEMWB_reg.result
+  val memData   = MEMWB_reg.memoryVal // Data coming back from memory
+  val pcPlus4   = MEMWB_reg.pc + 4.U // Return address for JAL/JALR
+
+  registers.io.rdData := MuxCase(0.U, Seq(
+    // ALU & Immediate operations use the ALU result
+    (MEMWB_reg.opcode === "b0110111".U) -> aluResult, //MEMWB_reg.imm,       // LUI (usually just the immediate)
+    (MEMWB_reg.opcode === "b0010111".U) -> aluResult,           // AUIPC
+    (MEMWB_reg.opcode === "b0010011".U) -> aluResult,           // ALU Imm / Shift
+    (MEMWB_reg.opcode === "b0110011".U) -> aluResult,           // ALU Reg
+
+    // Jump instructions write the return address (PC + 4)
+    (MEMWB_reg.opcode === "b1101111".U) -> pcPlus4,             // JAL
+    (MEMWB_reg.opcode === "b1100111".U) -> pcPlus4,             // JALR
+
+    // Load instructions use the data from memory
+    (MEMWB_reg.opcode === "b0000011".U) -> memData              // Load
+  ))
+
+
+  registers.io.regWrite := MuxCase(false.B, Seq(
+    (MEMWB_reg.opcode === "b0110111".U) -> true.B,  // LUI type
+    (MEMWB_reg.opcode === "b0010111".U) -> true.B,  // AUIPC type
+    (MEMWB_reg.opcode === "b1101111".U) -> true.B,  // JAL type
+    (MEMWB_reg.opcode === "b1100111".U) -> true.B,  // JALR type
+    (MEMWB_reg.opcode === "b0000011".U) -> true.B,  // MEMORY load type
+    (MEMWB_reg.opcode === "b0010011".U) -> true.B,  // ALU register - immediate type
+    (MEMWB_reg.opcode === "b0010011".U) -> true.B,  // SHIFT type
+    (MEMWB_reg.opcode === "b0110011".U) -> true.B   // ALU register - register type
+  ))
 
 
 
