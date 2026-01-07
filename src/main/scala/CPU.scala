@@ -14,6 +14,8 @@ class CPU(ProgPath: String) extends Module {
     val PRGCNT = Input(UInt(32.W))
   })
 
+
+
   val ProgMem = Module(new Memory(ProgPath))
   ProgMem.io.writeData := 0.U
   ProgMem.io.dataAddr := 0.U
