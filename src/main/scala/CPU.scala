@@ -54,7 +54,7 @@ class CPU() extends Module {
 
 
 
-  // --- EX/MEM --------------------------------------------------------
+  // --- EX/MEM PIPELINE REGISTER --------------------------------------------------------
   val EXMEM_reg = RegInit(0.U.asTypeOf(new EXMEMBundle))
   EXMEM_reg.pc := IDEX_reg.pc
   EXMEM_reg.instruction := IDEX_reg.instruction
@@ -69,8 +69,8 @@ class CPU() extends Module {
 
 
 
-  // --- MEM/WB --------------------------------------------------------
-  // PIPELINE STAGE
+  // --- MEM/WB PIPELINE REGISTER --------------------------------------------------------
+  val MEMWB_reg = RegInit(0.U.asTypeOf(new MEMWBBundle))
 
 
   // --- WRITE BACK ---

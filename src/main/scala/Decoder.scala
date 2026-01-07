@@ -1,7 +1,7 @@
 import chisel3._
 import chisel3.util._
 
-class decoder() extends Module{
+class Decoder() extends Module{
   val io = IO(new Bundle {
     val input = Input(UInt(32.W))
     val opcode = Output(UInt(7.W))
