@@ -16,6 +16,7 @@ class CPU(ProgPath: String) extends Module {
 
   val ProgMem = Module(new Memory(ProgPath))
 
+
   // --- FETCH STAGE ---
   ProgMem.io.instAddr := io.PRGCNT
   val current_instr = ProgMem.io.inst
@@ -41,7 +42,7 @@ class CPU(ProgPath: String) extends Module {
   // Registers
   val registers = Module(new Registers())
   registers.io.rs1 := decoder.io.rs1
-  //registers.io.rs2 := decoder.io.rs2
+  registers.io.rs2 := 0.U //decoder.io.rs2
 
 
 
@@ -62,6 +63,7 @@ class CPU(ProgPath: String) extends Module {
   val ALU = Module(new ALU())
   ALU.io.a0 := IDEX_reg.rs1Data
   ALU.io.a1 := IDEX_reg.imm // only for now, add a mux here later
+  ALU.io.sel := 0.U
 
 
 
