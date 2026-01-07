@@ -22,7 +22,6 @@ class CPU() extends Module {
   val current_pc    = io.PRGCNT
 
   // --- IF/ID PIPELINE REGISTER ---
-  // This creates one register that holds the bundle structure
   val IFID_reg = RegInit(0.U.asTypeOf(new IFIDBundle))
 
   // Update the register with values from Fetch stage
@@ -35,6 +34,22 @@ class CPU() extends Module {
   // Now you access them like this:
   val opcode = IFID_reg.instruction(6, 0)
   val pc_in_decode = IFID_reg.pc
+
+
+
+
+  // ID/EX PIPELINE REGISTER
+  val IDEX_reg = RegInit(0.U.asTypeOf(new IDEXBundle))
+  IDEX_reg.pc := IFID_reg.pc
+  IDEX_reg.instruction := IFID_reg.instruction
+
+
+  // --- EXECUTE STAGE ---
+  // here we execute with the ALU
+  val ALU = Module(new ALU())
+
+
+
 }
 
 
