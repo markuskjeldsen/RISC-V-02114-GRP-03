@@ -50,6 +50,24 @@ class CPU() extends Module {
 
 
 
+
+
+  // EX/MEM
+
+
+  // --- MEMORY STAGE ---
+  // here we ask the memory for information
+
+
+
+
+  // MEM/WB
+  // PIPELINE STAGE
+
+
+  // --- WRITE BACK ---
+
+
 }
 
 
