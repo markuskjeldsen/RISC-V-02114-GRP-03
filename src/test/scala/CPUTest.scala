@@ -6,16 +6,9 @@ class CPUTest extends AnyFlatSpec with ChiselScalatestTester {
     test(new CPU("src/test/scala/addi.hex")).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       // Increase timeout to inf cycles
       dut.clock.setTimeout(0)
-      dut.clock.step(1)
-      dut.clock.step(1)
-      dut.clock.step(1)
-      dut.clock.step(1)
-      dut.clock.step(1)
-      dut.clock.step(1)
-      dut.clock.step(1)
-      dut.clock.step(1)
-
-      dut.clock.step(10)
+      dut.clock.step(20)
+      // this program adds 30 and 34 into register x10
+      dut.registers.regs(10).expect(64)
     }
   }
 }
