@@ -14,15 +14,15 @@ class Decoder() extends Module {
     val rs2 = Output(UInt(5.W))
     val shamt = Output(UInt(5.W))
   })
-  val opcode = io.input(6,0)
-  val rd     = 0.U
-  val func3  = 0.U
-  val rs1    = 0.U
-  val imm    = 0.U
-  val func7 = 0.U
-  val rs2 = 0.U
-  val rawImm = 0.U
-  io.opcode := opcode
+  io.opcode := io.input(6,0)
+  io.rd     := 0.U
+  io.func3  := 0.U
+  io.rs1    := 0.U
+  io.imm    := 0.U
+  io.func7 := 0.U
+  io.rs2 := 0.U
+  io.shamt := 0.U
+  //val rawImm = 0.U
   switch(io.opcode){
     is("b0010011".U){
       io.func3  := io.input(14,12)
@@ -31,7 +31,7 @@ class Decoder() extends Module {
           io.rd := io.input(11, 7)
           io.rs1 := io.input(19, 15)
           // currently this is UInt(12.W)
-          rawImm := io.input(31, 20)
+          val rawImm = io.input(31, 20)
           // 3. Convert to UInt.
           io.imm := rawImm.asSInt.pad(32).asUInt
         }
@@ -39,7 +39,7 @@ class Decoder() extends Module {
           io.rd := io.input(11, 7)
           io.rs1 := io.input(19, 15)
           // currently this is UInt(12.W)
-          rawImm := io.input(31, 20)
+          val rawImm = io.input(31, 20)
           // 3. Convert to UInt.
           io.imm := rawImm.asSInt.pad(32).asUInt
         }
@@ -47,7 +47,7 @@ class Decoder() extends Module {
           io.rd := io.input(11, 7)
           io.rs1 := io.input(19, 15)
           // currently this is UInt(12.W)
-          rawImm := io.input(31, 20)
+          val rawImm = io.input(31, 20)
           // 3. Convert to UInt.
           io.imm := rawImm.asSInt.pad(32).asUInt
         }
@@ -55,7 +55,7 @@ class Decoder() extends Module {
           io.rd := io.input(11, 7)
           io.rs1 := io.input(19, 15)
           // currently this is UInt(12.W)
-          rawImm := io.input(31, 20)
+          val rawImm = io.input(31, 20)
           // 3. Convert to UInt.
           io.imm := rawImm.asSInt.pad(32).asUInt
         }
@@ -63,7 +63,7 @@ class Decoder() extends Module {
           io.rd := io.input(11, 7)
           io.rs1 := io.input(19, 15)
           // currently this is UInt(12.W)
-          rawImm := io.input(31, 20)
+          val rawImm = io.input(31, 20)
           // 3. Convert to UInt.
           io.imm := rawImm.asSInt.pad(32).asUInt
         }
@@ -71,7 +71,7 @@ class Decoder() extends Module {
           io.rd := io.input(11, 7)
           io.rs1 := io.input(19, 15)
           // currently this is UInt(12.W)
-          rawImm := io.input(31, 20)
+          val rawImm = io.input(31, 20)
           // 3. Convert to UInt.
           io.imm := rawImm.asSInt.pad(32).asUInt
         }
@@ -92,19 +92,23 @@ class Decoder() extends Module {
             io.rs1 := io.input(19, 15)
             io.shamt := io.input(24, 20)
           }
-            is("b0100000".U){
+            is("b0100000".U) {
               io.rd := io.input(11, 7)
               io.rs1 := io.input(19, 15)
               io.shamt := io.input(24, 20)
             }
-
-
           }
         }
       }
-
     }
-
+    is("b0110011".U){
+      io.func3 := io.input(14,12)
+      io.func7 := io.input(31,25)
+      io.rd := io.input(11,7)
+      io.rs1:= io.input(19,15)
+      io.rs2 := io.input(24,20)
+          }
+    }
   }
   //val opcode = io.input(6,0)
   //val rd     = io.input(11,7)
@@ -121,4 +125,4 @@ class Decoder() extends Module {
 
   // 3. Convert to UInt.
   //io.imm := rawImm.asSInt.pad(32).asUInt
-}
+

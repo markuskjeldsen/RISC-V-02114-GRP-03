@@ -9,7 +9,8 @@ class Control() extends Module {
     val ALUsrc = Output(UInt(1.W))
     val ALUctrl = Output(UInt(4.W))
   })
-
+    io.ALUsrc := 0.U
+    io.ALUctrl := 0.U
   switch (io.opcode){
     is( "b0010011".U ) {
       io.ALUsrc := 1.U

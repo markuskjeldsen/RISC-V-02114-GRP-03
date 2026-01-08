@@ -79,7 +79,7 @@ class CPU(ProgPath: String) extends Module {
   val control = Module(new Control())
   control.io.opcode := decoder.io.opcode
   control.io.func3 := decoder.io.func3
-  //control.io.func7 := decoder.io.func7
+  control.io.func7 := decoder.io.func7
 
   IDEX_reg.ALUsrc := control.io.ALUsrc
   IDEX_reg.ALUctrl := control.io.ALUctrl
