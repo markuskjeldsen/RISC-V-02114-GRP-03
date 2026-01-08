@@ -17,7 +17,7 @@ class CPUAddTest extends AnyFlatSpec with ChiselScalatestTester {
       // addi x0, x0, 0
 
       // this program adds 30 and 34 into register x12
-      dut.registers.regs(12).expect(64)
+      dut.io.regs(12).expect(64)
     }
   }
 }
