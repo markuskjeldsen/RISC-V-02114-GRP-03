@@ -2,7 +2,7 @@ import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
 
 class CPUAddiTest extends AnyFlatSpec with ChiselScalatestTester {
-  "CPU" should "pass" in {
+  "CPUAddi" should "pass" in {
     test(new CPU("src/test/scala/programs/addi.hex")).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       // Increase timeout to inf cycles
       dut.clock.setTimeout(0)
