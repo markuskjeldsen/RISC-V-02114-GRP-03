@@ -4,6 +4,12 @@ import chisel3.util._
 // Import your custom package
 import pipelineregisters._
 
+object Instructions {
+  def LOAD   = BitPat("b0000011")
+  def OP_IMM = BitPat("b0010011")
+  def STORE  = BitPat("b0100011")
+  def OP     = BitPat("b0110011")
+}
 
 // FETCH // DECODE // EXECUTE // MEMORY // WRITEBACK
 
@@ -81,11 +87,13 @@ class CPU(ProgPath: String) extends Module {
   val ALU = Module(new ALU())
   ALU.io.a0 := IDEX_reg.rs1Data
 
-  ALU.io.a1 := MuxCase(0.U, Seq(
-    (IDEX_reg.opcode === "b00?0011".U) -> IDEX_reg.imm, // memory load instructions and register immediate instrutions
-    (IDEX_reg.opcode === "b0100011".U) -> IDEX_reg.imm, // memory store instructions
-    (IDEX_reg.opcode === "b0110011".U) -> IDEX_reg.rs2Data, // register-register instructions
+  ALU.io.a1 := MuxLookup(IDEX_reg.opcode, 0.U)(Seq(
+    Instructions.LOAD   -> IDEX_reg.imm,
+    Instructions.OP_IMM -> IDEX_reg.imm,
+    Instructions.STORE  -> IDEX_reg.imm,
+    Instructions.OP     -> IDEX_reg.rs2Data
   ))
+
 
 
 
