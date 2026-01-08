@@ -11,11 +11,13 @@ class Registers extends Module {
 
     val rs1Data = Output(UInt(32.W)) // read data 1
     val rs2Data = Output(UInt(32.W)) // read data 2
+    val regs = Output(Vec(32, UInt(32.W)))
   })
 
   // 32 registers of 32 bits
   val regs = RegInit(VecInit(Seq.fill(32)(0.U(32.W))))
 
+  io.regs := regs
   // ignore writes to x0
   when(io.regWrite && io.rd =/= 0.U) {
     regs(io.rd) := io.rdData

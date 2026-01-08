@@ -9,7 +9,7 @@ import pipelineregisters._
 
 class CPU(ProgPath: String) extends Module {
   val io = IO(new Bundle {
-    val PRGCNT = Input(UInt(32.W))
+    val regs = Output(Vec(32,UInt(32.W)))
   })
   val decoder = Module(new Decoder())
 
@@ -61,7 +61,7 @@ class CPU(ProgPath: String) extends Module {
   val registers = Module(new Registers())
   registers.io.rs1 := decoder.io.rs1
   registers.io.rs2 := 0.U //decoder.io.rs2
-  registers.regs(10)
+  io.regs := registers.io.regs
 
 
 
