@@ -47,11 +47,13 @@ class Memory( ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 40
     is("b00".U) { // SB
       writeMask(byteOffset) := true.B
     }
-    is("b01".U) { // SH
+    // SH
+    is("b01".U) {
       writeMask(byteOffset)       := true.B
       writeMask(byteOffset + 1.U) := true.B
     }
-    is("b10".U) { // SW
+    // SW
+    is("b10".U) {
       writeMask := VecInit(Seq.fill(4)(true.B))
     }
   }
@@ -76,32 +78,17 @@ class Memory( ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 40
   switch(io.memSize) {
     is("b00".U) { // LB / LBU
       val byte = readReg(byteOffset)
-      loadData := Mux(
-        io.memSign,
-        Cat(Fill(24, byte(7)), byte), // LB
-        Cat(0.U(24.W), byte)          // LBU
-      )
+      loadData := Mux(io.memSign, Cat(Fill(24, byte(7)), byte), Cat(0.U(24.W), byte))
     }
 
     is("b01".U) { // LH / LHU
-      val half = Cat(
-        readReg(byteOffset + 1.U),
-        readReg(byteOffset)
-      )
-      loadData := Mux(
-        io.memSign,
-        Cat(Fill(16, half(15)), half), // LH
-        Cat(0.U(16.W), half)           // LHU
-      )
+      val half = Cat(readReg(byteOffset + 1.U), readReg(byteOffset))
+      // LH, LHU
+      loadData := Mux(io.memSign, Cat(Fill(16, half(15)), half), Cat(0.U(16.W), half))
     }
-
+    // LW
     is("b10".U) { // LW
-      loadData := Cat(
-        readReg(3),
-        readReg(2),
-        readReg(1),
-        readReg(0)
-      )
+      loadData := Cat(readReg(3), readReg(2), readReg(1), readReg(0))
     }
   }
 
