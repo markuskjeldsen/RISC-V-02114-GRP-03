@@ -8,7 +8,7 @@ class IDEXBundle extends Bundle {
   val opcode      = UInt(7.W)
   val rs1Data     = UInt(32.W)
   val rs2Data     = UInt(32.W)
-  val sel         = UInt(2.W)
+  val ALUsrc      = UInt(1.W)
   val imm         = UInt(32.W)
-
+  val ALUctrl     = UInt(4.W)
 }

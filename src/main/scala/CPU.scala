@@ -4,12 +4,6 @@ import chisel3.util._
 // Import your custom package
 import pipelineregisters._
 
-object Instructions {
-  def LOAD   = BitPat("b0000011")
-  def OP_IMM = BitPat("b0010011")
-  def STORE  = BitPat("b0100011")
-  def OP     = BitPat("b0110011")
-}
 
 // FETCH // DECODE // EXECUTE // MEMORY // WRITEBACK
 
@@ -71,6 +65,8 @@ class CPU(ProgPath: String) extends Module {
 
 
 
+
+
   // --- ID/EX PIPELINE REGISTER --------------------------------------------------------
   val IDEX_reg = RegInit(0.U.asTypeOf(new IDEXBundle))
   IDEX_reg.pc := IFID_reg.pc
@@ -80,25 +76,26 @@ class CPU(ProgPath: String) extends Module {
   IDEX_reg.opcode := decoder.io.opcode
   IDEX_reg.imm := decoder.io.imm
 
+  val control = Module(new Control())
+  control.io.opcode := decoder.io.opcode
+  control.io.func3 := decoder.io.func3
+  //control.io.func7 := decoder.io.func7
+
+  IDEX_reg.ALUsrc := control.io.ALUsrc
+  IDEX_reg.ALUctrl := control.io.ALUctrl
 
 
   // --- EXECUTE STAGE ---
   // here we execute with the ALU
   val ALU = Module(new ALU())
   ALU.io.a0 := IDEX_reg.rs1Data
-
-  ALU.io.a1 := MuxLookup(IDEX_reg.opcode, 0.U)(Seq(
-    Instructions.LOAD   -> IDEX_reg.imm,
-    Instructions.OP_IMM -> IDEX_reg.imm,
-    Instructions.STORE  -> IDEX_reg.imm,
-    Instructions.OP     -> IDEX_reg.rs2Data
+  ALU.io.a1 := MuxCase(0.U, Seq(
+    (IDEX_reg.ALUsrc === 0.U) -> IDEX_reg.rs2Data,
+    (IDEX_reg.ALUsrc === 1.U) -> IDEX_reg.imm
   ))
-
-
-
-
-  IDEX_reg.imm // only for now, add a mux here later
-  ALU.io.sel := 0.U
+  //ALU.io.a1 := IDEX_reg.imm // only for now, add a mux here later
+  //ALU.io.sel := 0.U
+  ALU.io.sel := IDEX_reg.ALUctrl
 
 
 
