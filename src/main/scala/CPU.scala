@@ -82,9 +82,9 @@ class CPU(ProgPath: String) extends Module {
   ALU.io.a0 := IDEX_reg.rs1Data
 
   ALU.io.a1 := MuxCase(0.U, Seq(
-    (IDEX_reg.opcode === "b00?0011".U) -> IDEX_reg.imm,
-    (IDEX_reg.opcode === "b0100011".U) -> IDEX_reg.imm,
-    (IDEX_reg.opcode === "b0110011".U) -> IDEX_reg.rs2Data,
+    (IDEX_reg.opcode === "b00?0011".U) -> IDEX_reg.imm, // memory load instructions and register immediate instrutions
+    (IDEX_reg.opcode === "b0100011".U) -> IDEX_reg.imm, // memory store instructions
+    (IDEX_reg.opcode === "b0110011".U) -> IDEX_reg.rs2Data, // register-register instructions
   ))
 
 
