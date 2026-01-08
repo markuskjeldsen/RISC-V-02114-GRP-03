@@ -59,7 +59,7 @@ class CPU(ProgPath: String) extends Module {
   // Registers
   val registers = Module(new Registers())
   registers.io.rs1 := decoder.io.rs1
-  registers.io.rs2 := 0.U //decoder.io.rs2
+  registers.io.rs2 := decoder.io.rs2
   io.regs := registers.io.regs
 
 
