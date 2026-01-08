@@ -17,7 +17,7 @@ class ALU() extends Module{
     is(4.U) { io.out := (io.a0 < io.a1).asUInt} //SLTU
     is(5.U) { io.out := io.a0 ^ io.a1} //XOR
     is(6.U) { io.out := io.a0 >> io.a1(4,0)} //SRL
-    is(7.U) { io.out := (io.a0 >> io.a1(4,0)).asUInt} //SRA
+    is(7.U) { io.out := (io.a0.asSInt >> io.a1(4,0)).asUInt } // SRA
     is(8.U) { io.out := io.a0 | io.a1 } //OR
     is(9.U) { io.out := io.a0 & io.a1 } //AND
   }
