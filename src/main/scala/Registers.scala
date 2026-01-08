@@ -14,8 +14,10 @@ class Registers extends Module {
     val regs = Output(Vec(32, UInt(32.W)))
   })
 
-  // 32 registers of 32 bits
-  val regs = RegInit(VecInit(Seq.fill(32)(0.U(32.W))))
+  // 32 registers of 32 bits set x2 = 4096
+  val regs = RegInit(VecInit(Seq.tabulate(32) { i =>
+    if (i == 2) 4096.U(32.W) else 0.U(32 W)
+  }))
 
   io.regs := regs
   // ignore writes to x0
