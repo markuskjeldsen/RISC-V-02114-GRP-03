@@ -80,7 +80,15 @@ class CPU(ProgPath: String) extends Module {
   // here we execute with the ALU
   val ALU = Module(new ALU())
   ALU.io.a0 := IDEX_reg.rs1Data
-  ALU.io.a1 := IDEX_reg.imm // only for now, add a mux here later
+
+  ALU.io.a1 := MuxCase(0.U, Seq(
+    (IDEX_reg.opcode === "b00?0011".U) -> IDEX_reg.imm,
+    (IDEX_reg.opcode === "b0100011".U) -> IDEX_reg.imm,
+  ))
+
+
+
+  IDEX_reg.imm // only for now, add a mux here later
   ALU.io.sel := 0.U
 
 
