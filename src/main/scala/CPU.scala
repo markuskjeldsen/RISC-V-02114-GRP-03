@@ -18,7 +18,6 @@ class CPU(ProgPath: String) extends Module {
   val PCMuxSel = RegInit(0.U(2.W))
 
   PC := MuxCase(0.U, Seq(
-    // ALU & Immediate operations use the ALU result
     (PCMuxSel === 0.U) -> (PC + 4.U), // this is the normal operation
     (PCMuxSel === 1.U) -> PC,     // dont increment
     (PCMuxSel === 2.U) -> (decoder.io.imm << 1) //
@@ -68,7 +67,6 @@ class CPU(ProgPath: String) extends Module {
 
   // --- ID/EX PIPELINE REGISTER --------------------------------------------------------
   val IDEX_reg = RegInit(0.U.asTypeOf(new IDEXBundle))
-  dontTouch(IDEX_reg)
   IDEX_reg.pc := IFID_reg.pc
   IDEX_reg.instruction := IFID_reg.instruction
   IDEX_reg.rs1Data := registers.io.rs1Data
