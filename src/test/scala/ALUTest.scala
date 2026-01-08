@@ -31,7 +31,6 @@ class ALUTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.a1.poke(6)
       dut.io.sel.poke(1) // subtract
       dut.clock.step(1)
-      println(s"io.out = ${dut.io.out.peek().litValue}")
       dut.io.out.expect(0xFFFFFFFFL.U)
 
       // ----------------------------
