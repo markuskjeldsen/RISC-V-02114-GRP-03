@@ -1,8 +1,6 @@
-import chisel3._
+import chisel3.{RegInit, dontTouch, _}
 import chisel3.util._
 
-import chisel3._
-import chisel3.util._
 // Import your custom package
 import pipelineregisters._
 
@@ -14,6 +12,15 @@ class CPU(ProgPath: String) extends Module {
     val PRGCNT = Input(UInt(32.W))
   })
 
+  val PC = RegInit(0.U(32.W))
+  val PCMuxSel = 0.U
+
+  PC := MuxCase(0.U, Seq(
+    // ALU & Immediate operations use the ALU result
+    (PCMuxSel === 0.U) -> PC+4.U, // this is the normal operation
+    (PCMuxSel === 1.U) -> PC,     // dont increment
+    (PCMuxSel === 2.U) -> decoder.io.imm, //
+  ))
 
 
   val ProgMem = Module(new Memory(ProgPath))
@@ -27,14 +34,15 @@ class CPU(ProgPath: String) extends Module {
 
 
   // --- FETCH STAGE ---
-  ProgMem.io.instAddr := io.PRGCNT
+  ProgMem.io.instAddr := PC
   val current_instr = ProgMem.io.inst
-  val current_pc    = io.PRGCNT
+  val current_pc    = PC
 
 
 
   // --- IF/ID PIPELINE REGISTER --------------------------------------------------------
   val IFID_reg = RegInit(0.U.asTypeOf(new IFIDBundle))
+  dontTouch(IFID_reg)
 
   // Update the register with values from Fetch stage
   IFID_reg.instruction := current_instr
@@ -58,6 +66,7 @@ class CPU(ProgPath: String) extends Module {
 
   // --- ID/EX PIPELINE REGISTER --------------------------------------------------------
   val IDEX_reg = RegInit(0.U.asTypeOf(new IDEXBundle))
+  dontTouch(IDEX_reg)
   IDEX_reg.pc := IFID_reg.pc
   IDEX_reg.instruction := IFID_reg.instruction
   IDEX_reg.rs1Data := registers.io.rs1Data
@@ -80,6 +89,7 @@ class CPU(ProgPath: String) extends Module {
 
   // --- EX/MEM PIPELINE REGISTER --------------------------------------------------------
   val EXMEM_reg = RegInit(0.U.asTypeOf(new EXMEMBundle))
+  dontTouch(EXMEM_reg)
   EXMEM_reg.pc := IDEX_reg.pc
   EXMEM_reg.instruction := IDEX_reg.instruction
   EXMEM_reg.opcode := IDEX_reg.opcode
@@ -96,6 +106,7 @@ class CPU(ProgPath: String) extends Module {
 
   // --- MEM/WB PIPELINE REGISTER --------------------------------------------------------
   val MEMWB_reg = RegInit(0.U.asTypeOf(new MEMWBBundle))
+  dontTouch(MEMWB_reg)
   MEMWB_reg.pc := EXMEM_reg.pc
   MEMWB_reg.instruction := EXMEM_reg.instruction
   MEMWB_reg.opcode := EXMEM_reg.opcode
