@@ -11,15 +11,17 @@ class CPU(ProgPath: String) extends Module {
   val io = IO(new Bundle {
     val PRGCNT = Input(UInt(32.W))
   })
+  val decoder = Module(new Decoder())
+
 
   val PC = RegInit(0.U(32.W))
-  val PCMuxSel = 0.U
+  val PCMuxSel = RegInit(0.U(2.W))
 
   PC := MuxCase(0.U, Seq(
     // ALU & Immediate operations use the ALU result
-    (PCMuxSel === 0.U) -> PC+4.U, // this is the normal operation
+    (PCMuxSel === 0.U) -> (PC + 4.U), // this is the normal operation
     (PCMuxSel === 1.U) -> PC,     // dont increment
-    (PCMuxSel === 2.U) -> decoder.io.imm, //
+    (PCMuxSel === 2.U) -> (decoder.io.imm << 1) //
   ))
 
 
@@ -52,7 +54,6 @@ class CPU(ProgPath: String) extends Module {
 
   // --- DECODE STAGE ---
   // Now you access them like this:
-  val decoder = Module(new Decoder())
   decoder.io.input := IFID_reg.instruction
 
 
