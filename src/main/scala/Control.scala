@@ -50,6 +50,9 @@ class Control() extends Module {
     is("b0100011".U) { // Memory Store Instructions
       io.ALUsrc := 1.U // use imm
     }
+    is("b0000011".U) { // Memory Load Instructions
+      io.ALUsrc := 1.U // use imm
+    }
 
   } // end opcode switch
 }
