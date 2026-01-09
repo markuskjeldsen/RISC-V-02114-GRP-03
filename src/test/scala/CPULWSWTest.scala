@@ -20,9 +20,13 @@ class CPULWSWTest extends AnyFlatSpec with ChiselScalatestTester {
       // sw x10, -4(x2)
       // addi x0, x0, 0
       // addi x0, x0, 0
+      // addi x0, x0, 0
       // lw x11, -4(x2)
       // addi x0, x0, 0
       // addi x0, x0, 0
+      // addi x0, x0, 0
+      // addi x0, x0, 0
+
 
       // this program adds 30 and 34 into register x12
       dut.io.regs(11).expect(30)
