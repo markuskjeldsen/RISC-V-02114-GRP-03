@@ -1,7 +1,7 @@
 import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
 
-class CPUAddTest extends AnyFlatSpec with ChiselScalatestTester {
+class CPUIRRITest extends AnyFlatSpec with ChiselScalatestTester {
   "CPUIRRITest" should "pass" in {
     test(new CPU("src/test/scala/programs/CPUIRRI.hex")).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       // Increase timeout to inf cycles
