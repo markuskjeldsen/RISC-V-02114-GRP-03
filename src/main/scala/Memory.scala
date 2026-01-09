@@ -5,21 +5,19 @@ import chisel3.util.experimental.loadMemoryFromFile
 class Memory( ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 4096) extends Module {
   val io = IO(new Bundle {
     val instAddr = Input(UInt(32.W))
-    val inst     = Output(UInt(32.W))
+    val inst = Output(UInt(32.W))
 
     // Data memory
-    val dataAddr  = Input(UInt(32.W))
-    val writeData = Input(UInt(32.W))
-    val memRead   = Input(Bool())
-    val memWrite  = Input(Bool())
+    val dataAddr = Input(UInt(32.W))
+    val rs2Data = Input(UInt(32.W))
+    val opcode = Input(UInt(7.W))
 
     // RV32I load/store control
-    val memSize = Input(UInt(2.W)) // 00=byte, 01=half, 10=word
-    val memSign = Input(Bool())    // 1=signed, 0=unsigned (loads only)
+    val func3 = Input(UInt(3.W)) // 00=byte, 01=half, 10=word
 
     val readData = Output(UInt(32.W))
   })
-
+  val memSign = io.func3(3)
   // Instruction Memory
   val iMem = SyncReadMem(instMemWords, UInt(32.W))
 
@@ -35,7 +33,7 @@ class Memory( ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 40
   // Data Memory (DMEM)
   val dMem = SyncReadMem(dataMemWords, Vec(4, UInt(8.W)))
 
-  val wordAddr   = io.dataAddr(31, 2)
+  val wordAddr = io.dataAddr(31, 2)
   val byteOffset = io.dataAddr(1, 0)
 
 
@@ -43,62 +41,72 @@ class Memory( ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 40
   val writeMask = Wire(Vec(4, Bool()))
   writeMask := VecInit(Seq.fill(4)(false.B))
 
-  switch(io.memSize) {
-    is("b00".U) { // SB
-      writeMask(byteOffset) := true.B
-    }
-    // SH
-    is("b01".U) {
-      writeMask(byteOffset)       := true.B
-      writeMask(byteOffset + 1.U) := true.B
-    }
-    // SW
-    is("b10".U) {
-      writeMask := VecInit(Seq.fill(4)(true.B))
-    }
-  }
 
-  val writeBytes = io.writeData.asTypeOf(Vec(4, UInt(8.W)))
 
-  when(io.memWrite) {
-    dMem.write(wordAddr, writeBytes, writeMask)
-  }
+  val writeBytes = io.rs2Data.asTypeOf(Vec(4, UInt(8.W)))
 
   // LOAD LOGIC (LB/LBU/LH/LHU/LW)
-  val readBytes = dMem.read(wordAddr, io.memRead)
-
+  val readBytes = dMem.read(wordAddr, io.opcode === "b0000011".U)
   val readReg = Reg(Vec(4, UInt(8.W)))
-  when(io.memRead) {
-    readReg := readBytes
-  }
+
 
   val loadData = Wire(UInt(32.W))
   loadData := 0.U
+  switch(io.opcode) {
+    is("b0000011".U) {
+      switch(io.func3) {
+        is("b000".U) { // LB / LBU
+          val byte = readReg(byteOffset)
+          loadData := Mux(memSign, Cat(Fill(24, byte(7)), byte), Cat(0.U(24.W), byte))
+          readReg := readBytes
+        }
+        is("b100".U) { // LB / LBU
+          val byte = readReg(byteOffset)
+          loadData := Mux(memSign, Cat(Fill(24, byte(7)), byte), Cat(0.U(24.W), byte))
+          readReg := readBytes
+        }
 
-  switch(io.memSize) {
-    is("b00".U) { // LB / LBU
-      val byte = readReg(byteOffset)
-      loadData := Mux(io.memSign, Cat(Fill(24, byte(7)), byte), Cat(0.U(24.W), byte))
-    }
-
-    is("b01".U) { // LH / LHU
-      val half = Cat(readReg(byteOffset + 1.U), readReg(byteOffset))
-      // LH, LHU
-      loadData := Mux(io.memSign, Cat(Fill(16, half(15)), half), Cat(0.U(16.W), half))
-    }
-    // LW
-    is("b10".U) { // LW
-      loadData := Cat(readReg(3), readReg(2), readReg(1), readReg(0))
-    }
+        is("b001".U) { // LH / LHU
+          val half = Cat(readReg(byteOffset + 1.U), readReg(byteOffset))
+          // LH, LHU
+          loadData := Mux(memSign, Cat(Fill(16, half(15)), half), Cat(0.U(16.W), half))
+          readReg := readBytes
+        }
+        is("b101".U) { // LH / LHU
+          val half = Cat(readReg(byteOffset + 1.U), readReg(byteOffset))
+          // LH, LHU
+          loadData := Mux(memSign, Cat(Fill(16, half(15)), half), Cat(0.U(16.W), half))
+          readReg := readBytes
+        }
+        // LW
+        is("b010".U) { // LW
+          loadData := Cat(readReg(3), readReg(2), readReg(1), readReg(0))
+          readReg := readBytes
+        }
+      }
   }
+    is("b0100011".U){
+      switch(io.func3) {
+        is("b000".U) { // SB
+          writeMask(byteOffset) := true.B
+          dMem.write(wordAddr, writeBytes, writeMask)
+
+        }
+        // SH
+        is("b001".U) {
+          writeMask(byteOffset) := true.B
+          writeMask(byteOffset + 1.U) := true.B
+          dMem.write(wordAddr, writeBytes, writeMask)
+
+        }
+        // SW
+        is("b010".U) {
+          writeMask := VecInit(Seq.fill(4)(true.B))
+          dMem.write(wordAddr, writeBytes, writeMask)
+        }
+      }
+    }
+}
 
   io.readData := loadData
-
-  // Optional RV32I alignment checks
-  when(io.memSize === "b01".U) { // halfword
-    assert(io.dataAddr(0) === 0.U)
-  }
-  when(io.memSize === "b10".U) { // word
-    assert(io.dataAddr(1, 0) === 0.U)
-  }
 }

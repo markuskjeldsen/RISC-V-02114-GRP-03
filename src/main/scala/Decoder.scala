@@ -109,6 +109,20 @@ class Decoder() extends Module {
       io.rs2 := io.input(24,20)
           }
     }
+    is("b0000011".U){
+      io.func3 := io.input(14,12)
+      io.imm := io.input(31,20)
+      io.rs1 := io.input(19,15)
+      io.rd := io.input(11,7)
+    }
+
+    is("b0100011".U){
+      io.func3 := io.input(14,12)
+      io.imm := io.input(31,25)
+      io.rs1 := io.input(19,15)
+      io.rs2 := io.input(24,20)
+      io.imm := io.input(11,7)
+    }
   }
   //val opcode = io.input(6,0)
   //val rd     = io.input(11,7)

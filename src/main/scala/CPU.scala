@@ -25,12 +25,6 @@ class CPU(ProgPath: String) extends Module {
 
 
   val ProgMem = Module(new Memory(ProgPath))
-  ProgMem.io.writeData := 0.U
-  ProgMem.io.dataAddr := 0.U
-  ProgMem.io.memSize := 0.U
-  ProgMem.io.memSign := 0.U
-  ProgMem.io.memRead := 0.U
-  ProgMem.io.memWrite := 0.U
 
 
 
@@ -116,12 +110,18 @@ class CPU(ProgPath: String) extends Module {
   EXMEM.io.in.instruction := IDEX.io.out.instruction
   EXMEM.io.in.opcode := IDEX.io.out.opcode
   EXMEM.io.in.result := ALU.io.out
-
+  EXMEM.io.in.func3 := decoder.io.func3
+  EXMEM.io.in.func7 := decoder.io.func7
+  EXMEM.io.in.rs2Data := IDEX.io.out.rs2Data
 
 
   // --- MEMORY STAGE ---
   // here we ask the memory for information
 
+  ProgMem.io.rs2Data := EXMEM.io.out.rs2Data
+  ProgMem.io.dataAddr := EXMEM.io.out.result
+  ProgMem.io.func3 := EXMEM.io.out.func3
+  ProgMem.io.opcode := EXMEM.io.out.opcode
 
 
 

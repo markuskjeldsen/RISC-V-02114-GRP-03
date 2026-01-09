@@ -97,7 +97,10 @@ class Control() extends Module {
         is("b111".U){
           io.ALUctrl := 9.U
         }
+    is("b0000011".U){ // Memory Load instructions.
 
+
+    }
 
 
       }
