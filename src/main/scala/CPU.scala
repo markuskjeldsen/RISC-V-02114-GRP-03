@@ -155,7 +155,7 @@ class CPU(ProgPath: String) extends Module {
     (MEMWB.io.out.opcode === "b1100111".U) -> (MEMWB.io.out.pc + 4.U),             // JALR
 
     // Load instructions use the data from memory
-    (MEMWB.io.out.opcode === "b0000011".U) -> MEMWB.io.out.memoryVal              // Load
+    (MEMWB.io.out.opcode === "b0000011".U) -> ProgMem.io.readData              // Load must be the actual data because data is one cycle late
   ))
 
 
