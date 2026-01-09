@@ -8,8 +8,12 @@ class CPULWSWTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.clock.setTimeout(0)
       dut.clock.step(20)
       // addi x10, x0 ,0
+      // addi x10, x0 ,0
+      // addi x10, x0 ,0
       // addi x11, x0 ,0
       // addi x10, x0 , 30
+      // addi x10, x0 ,0
+      // addi x10, x0 ,0
       // addi x0, x0, 0
       // addi x0, x0, 0
       // addi x0, x0, 0
