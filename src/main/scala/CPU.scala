@@ -103,7 +103,6 @@ class CPU(ProgPath: String) extends Module {
 
   // --- EX/MEM PIPELINE REGISTER --------------------------------------------------------
   val EXMEM_reg = RegInit(0.U.asTypeOf(new EXMEMBundle))
-  dontTouch(EXMEM_reg)
   EXMEM_reg.pc := IDEX_reg.pc
   EXMEM_reg.instruction := IDEX_reg.instruction
   EXMEM_reg.opcode := IDEX_reg.opcode
