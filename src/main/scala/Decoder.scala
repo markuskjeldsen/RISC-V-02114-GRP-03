@@ -24,10 +24,10 @@ class Decoder() extends Module {
   io.shamt := 0.U
   //val rawImm = 0.U
   switch(io.opcode){
-    is("b0010011".U){
+    is("b0010011".U){ //intger functions
       io.func3  := io.input(14,12)
       switch(io.func3){
-        is("b000".U) {
+        is("b000".U) { //ADDI
           io.rd := io.input(11, 7)
           io.rs1 := io.input(19, 15)
           // currently this is UInt(12.W)
@@ -35,7 +35,7 @@ class Decoder() extends Module {
           // 3. Convert to UInt.
           io.imm := rawImm.asSInt.pad(32).asUInt
         }
-        is("b010".U) {
+        is("b010".U) { //SLTI
           io.rd := io.input(11, 7)
           io.rs1 := io.input(19, 15)
           // currently this is UInt(12.W)
@@ -43,7 +43,7 @@ class Decoder() extends Module {
           // 3. Convert to UInt.
           io.imm := rawImm.asSInt.pad(32).asUInt
         }
-        is("b011".U) {
+        is("b011".U) { //SLTIU
           io.rd := io.input(11, 7)
           io.rs1 := io.input(19, 15)
           // currently this is UInt(12.W)
@@ -51,7 +51,7 @@ class Decoder() extends Module {
           // 3. Convert to UInt.
           io.imm := rawImm.asSInt.pad(32).asUInt
         }
-        is("b100".U) {
+        is("b100".U) { //XORI
           io.rd := io.input(11, 7)
           io.rs1 := io.input(19, 15)
           // currently this is UInt(12.W)
@@ -59,7 +59,7 @@ class Decoder() extends Module {
           // 3. Convert to UInt.
           io.imm := rawImm.asSInt.pad(32).asUInt
         }
-        is("b110".U) {
+        is("b110".U) { //ORI
           io.rd := io.input(11, 7)
           io.rs1 := io.input(19, 15)
           // currently this is UInt(12.W)
@@ -67,7 +67,7 @@ class Decoder() extends Module {
           // 3. Convert to UInt.
           io.imm := rawImm.asSInt.pad(32).asUInt
         }
-        is("b111".U) {
+        is("b111".U) { //ANDI
           io.rd := io.input(11, 7)
           io.rs1 := io.input(19, 15)
           // currently this is UInt(12.W)
@@ -75,7 +75,7 @@ class Decoder() extends Module {
           // 3. Convert to UInt.
           io.imm := rawImm.asSInt.pad(32).asUInt
         }
-        is("b001".U) {
+        is("b001".U) { //SLLI
           io.rd := io.input(11, 7)
           io.rs1 := io.input(19, 15)
           io.shamt := io.input(24,20)
@@ -87,12 +87,12 @@ class Decoder() extends Module {
           switch(io.func7) {
 
 
-            is("b0000000".U) {
+            is("b0000000".U) { //SRLI
             io.rd := io.input(11, 7)
             io.rs1 := io.input(19, 15)
             io.shamt := io.input(24, 20)
           }
-            is("b0100000".U) {
+            is("b0100000".U) { //SRAI
               io.rd := io.input(11, 7)
               io.rs1 := io.input(19, 15)
               io.shamt := io.input(24, 20)
