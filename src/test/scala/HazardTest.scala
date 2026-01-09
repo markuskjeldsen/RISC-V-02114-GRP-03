@@ -7,11 +7,11 @@ class HazardTest extends AnyFlatSpec with ChiselScalatestTester {
       // Increase timeout to inf cycles
       dut.clock.setTimeout(0)
       dut.clock.step(20)
-      dut.io.regs(1).expect(2)
-      dut.io.regs(2).expect(6)
-      // addi x1, x0, 2
-      // add  x2, x1, x1
-      // add  x2, x1, x2
+      dut.io.regs(10).expect(2)
+      dut.io.regs(11).expect(6)
+      // addi x10, x0, 2
+      // add  x11, x10, x10
+      // add  x11, x10, x11
     }
   }
 }
