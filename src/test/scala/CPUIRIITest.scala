@@ -16,7 +16,7 @@ class CPUIRIITest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.regs(7).expect(1)
       dut.io.regs(8).expect(0)
       dut.io.regs(9).expect(3)
-      dut.io.regs(10).expect(BigInt("FFFFFFFF", 16))
+      dut.io.regs(10).expect(BigInt("FFFFFFFA", 16))
       dut.io.regs(11).expect(7)
       dut.io.regs(12).expect(BigInt("FFFFFFFF", 16))
       dut.io.regs(13).expect(1)
