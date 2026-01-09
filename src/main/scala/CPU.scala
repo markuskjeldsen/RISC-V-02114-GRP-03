@@ -12,6 +12,8 @@ class CPU(ProgPath: String) extends Module {
     val regs = Output(Vec(32,UInt(32.W)))
   })
   val decoder = Module(new Decoder())
+  //val hazardDetection = Module(new HazardDetection())
+
 
 
   val PC = RegInit(0.U(32.W))
@@ -57,16 +59,10 @@ class CPU(ProgPath: String) extends Module {
   io.regs := registers.io.regs
 
 
-
-
-
-
   // --- ID/EX PIPELINE REGISTER --------------------------------------------------------
-  val IDEX_reg = RegInit(0.U.asTypeOf(new IDEXBundle))
   val IDEX = Module(new IDEX())
   IDEX.io.en := 1.U
   IDEX.io.clear := 0.U
-
 
   IDEX.io.in.pc := IFID.io.out.pc
   IDEX.io.in.instruction := IFID.io.out.instruction
@@ -74,6 +70,8 @@ class CPU(ProgPath: String) extends Module {
   IDEX.io.in.rs2Data := registers.io.rs2Data
   IDEX.io.in.opcode := decoder.io.opcode
   IDEX.io.in.imm := decoder.io.imm
+
+  //hazardDetection.io.in.IFIDrs1
 
   val control = Module(new Control())
   dontTouch(control.io)
