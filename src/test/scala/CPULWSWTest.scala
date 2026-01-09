@@ -2,7 +2,7 @@ import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
 
 class CPULWSWTest extends AnyFlatSpec with ChiselScalatestTester {
-  "CPUAdd" should "pass" in {
+  "CPULWSW" should "pass" in {
     test(new CPU("src/test/scala/programs/lwsw.hex")).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       // Increase timeout to inf cycles
       dut.clock.setTimeout(0)
