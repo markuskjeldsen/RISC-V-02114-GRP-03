@@ -42,18 +42,18 @@ class CPU(ProgPath: String) extends Module {
 
 
   // --- IF/ID PIPELINE REGISTER --------------------------------------------------------
-  val IFID_reg = RegInit(0.U.asTypeOf(new IFIDBundle))
-  dontTouch(IFID_reg)
-
+  val IFID = Module(new IFID())
   // Update the register with values from Fetch stage
-  IFID_reg.instruction := current_instr
-  IFID_reg.pc          := current_pc
+  IFID.io.in.instruction := current_instr
+  IFID.io.in.pc          := current_pc
+  IFID.io.en := 1.U
+  IFID.io.clear := 0.U
 
 
 
   // --- DECODE STAGE ---
   // Now you access them like this:
-  decoder.io.input := IFID_reg.instruction
+  decoder.io.input := IFID.io.out.instruction
 
 
   // Registers
@@ -69,45 +69,53 @@ class CPU(ProgPath: String) extends Module {
 
   // --- ID/EX PIPELINE REGISTER --------------------------------------------------------
   val IDEX_reg = RegInit(0.U.asTypeOf(new IDEXBundle))
-  IDEX_reg.pc := IFID_reg.pc
-  IDEX_reg.instruction := IFID_reg.instruction
-  IDEX_reg.rs1Data := registers.io.rs1Data
-  IDEX_reg.rs2Data := registers.io.rs2Data
-  IDEX_reg.opcode := decoder.io.opcode
-  IDEX_reg.imm := decoder.io.imm
+  val IDEX = Module(new IDEX())
+  IDEX.io.en := 1.U
+  IDEX.io.clear := 0.U
+
+
+  IDEX.io.in.pc := IFID.io.out.pc
+  IDEX.io.in.instruction := IFID.io.out.instruction
+  IDEX.io.in.rs1Data := registers.io.rs1Data
+  IDEX.io.in.rs2Data := registers.io.rs2Data
+  IDEX.io.in.opcode := decoder.io.opcode
+  IDEX.io.in.imm := decoder.io.imm
 
   val control = Module(new Control())
+  dontTouch(control.io)
   control.io.opcode := decoder.io.opcode
   control.io.func3 := decoder.io.func3
   control.io.func7 := decoder.io.func7
 
-  IDEX_reg.ALUsrc := control.io.ALUsrc
-  IDEX_reg.ALUctrl := control.io.ALUctrl
+  IDEX.io.in.ALUsrc := control.io.ALUsrc
+  IDEX.io.in.ALUctrl := control.io.ALUctrl
 
 
   // --- EXECUTE STAGE ---
   // here we execute with the ALU
   val ALU = Module(new ALU())
-  ALU.io.a0 := IDEX_reg.rs1Data
+  ALU.io.a0 := IDEX.io.out.rs1Data
   ALU.io.a1 := MuxCase(0.U, Seq(
-    (IDEX_reg.ALUsrc === 0.U) -> IDEX_reg.rs2Data,
-    (IDEX_reg.ALUsrc === 1.U) -> IDEX_reg.imm
+    (IDEX.io.out.ALUsrc === 0.U) -> IDEX.io.out.rs2Data,
+    (IDEX.io.out.ALUsrc === 1.U) -> IDEX.io.out.imm
   ))
   //ALU.io.a1 := IDEX_reg.imm // only for now, add a mux here later
   //ALU.io.sel := 0.U
-  ALU.io.sel := IDEX_reg.ALUctrl
+  ALU.io.sel := IDEX.io.out.ALUctrl
 
 
 
 
 
   // --- EX/MEM PIPELINE REGISTER --------------------------------------------------------
-  val EXMEM_reg = RegInit(0.U.asTypeOf(new EXMEMBundle))
-  EXMEM_reg.pc := IDEX_reg.pc
-  EXMEM_reg.instruction := IDEX_reg.instruction
-  EXMEM_reg.opcode := IDEX_reg.opcode
-  EXMEM_reg.result := ALU.io.out
-  EXMEM_reg.opcode := IDEX_reg.opcode
+  val EXMEM = Module(new EXMEM())
+  EXMEM.io.en := 1.U
+  EXMEM.io.clear := 0.U
+
+  EXMEM.io.in.pc := IDEX.io.out.pc
+  EXMEM.io.in.instruction := IDEX.io.out.instruction
+  EXMEM.io.in.opcode := IDEX.io.out.opcode
+  EXMEM.io.in.result := ALU.io.out
 
 
 
@@ -118,47 +126,46 @@ class CPU(ProgPath: String) extends Module {
 
 
   // --- MEM/WB PIPELINE REGISTER --------------------------------------------------------
-  val MEMWB_reg = RegInit(0.U.asTypeOf(new MEMWBBundle))
-  dontTouch(MEMWB_reg)
-  MEMWB_reg.pc := EXMEM_reg.pc
-  MEMWB_reg.instruction := EXMEM_reg.instruction
-  MEMWB_reg.opcode := EXMEM_reg.opcode
-  MEMWB_reg.result := EXMEM_reg.result
+  val MEMWB = Module(new MEMWB())
+  MEMWB.io.en := 1.U
+  MEMWB.io.clear := 0.U
+  MEMWB.io.in.pc := EXMEM.io.out.pc
+  MEMWB.io.in.instruction := EXMEM.io.out.instruction
+  MEMWB.io.in.opcode := EXMEM.io.out.opcode
+  MEMWB.io.in.result := EXMEM.io.out.result
+  MEMWB.io.in.memoryVal := 0.U // placeholder the memory controller hasnt been implemented yet
+
 
   // --- WRITE BACK ---
   // if we should write back then do it
 
-  registers.io.rd := MEMWB_reg.instruction(11,7)
-  // Define your data sources (adjust names to match your registers/io)
-  val aluResult = MEMWB_reg.result
-  val memData   = MEMWB_reg.memoryVal // Data coming back from memory
-  val pcPlus4   = MEMWB_reg.pc + 4.U // Return address for JAL/JALR
+  registers.io.rd := MEMWB.io.out.instruction(11,7)
 
   registers.io.rdData := MuxCase(0.U, Seq(
     // ALU & Immediate operations use the ALU result
-    (MEMWB_reg.opcode === "b0110111".U) -> aluResult, //MEMWB_reg.imm,       // LUI (usually just the immediate)
-    (MEMWB_reg.opcode === "b0010111".U) -> aluResult,           // AUIPC
-    (MEMWB_reg.opcode === "b0010011".U) -> aluResult,           // ALU Imm / Shift
-    (MEMWB_reg.opcode === "b0110011".U) -> aluResult,           // ALU Reg
+    (MEMWB.io.out.opcode === "b0110111".U) -> MEMWB.io.out.result, //MEMWB_reg.imm,       // LUI (usually just the immediate)
+    (MEMWB.io.out.opcode === "b0010111".U) -> MEMWB.io.out.result,           // AUIPC
+    (MEMWB.io.out.opcode === "b0010011".U) -> MEMWB.io.out.result,           // ALU Imm / Shift
+    (MEMWB.io.out.opcode === "b0110011".U) -> MEMWB.io.out.result,           // ALU Reg
 
     // Jump instructions write the return address (PC + 4)
-    (MEMWB_reg.opcode === "b1101111".U) -> pcPlus4,             // JAL
-    (MEMWB_reg.opcode === "b1100111".U) -> pcPlus4,             // JALR
+    (MEMWB.io.out.opcode === "b1101111".U) -> (MEMWB.io.out.pc + 4.U),             // JAL
+    (MEMWB.io.out.opcode === "b1100111".U) -> (MEMWB.io.out.pc + 4.U),             // JALR
 
     // Load instructions use the data from memory
-    (MEMWB_reg.opcode === "b0000011".U) -> memData              // Load
+    (MEMWB.io.out.opcode === "b0000011".U) -> MEMWB.io.out.memoryVal              // Load
   ))
 
 
   registers.io.regWrite := MuxCase(false.B, Seq(
-    (MEMWB_reg.opcode === "b0110111".U) -> true.B,  // LUI type
-    (MEMWB_reg.opcode === "b0010111".U) -> true.B,  // AUIPC type
-    (MEMWB_reg.opcode === "b1101111".U) -> true.B,  // JAL type
-    (MEMWB_reg.opcode === "b1100111".U) -> true.B,  // JALR type
-    (MEMWB_reg.opcode === "b0000011".U) -> true.B,  // MEMORY load type
-    (MEMWB_reg.opcode === "b0010011".U) -> true.B,  // ALU register - immediate type
-    (MEMWB_reg.opcode === "b0010011".U) -> true.B,  // SHIFT type
-    (MEMWB_reg.opcode === "b0110011".U) -> true.B   // ALU register - register type
+    (MEMWB.io.out.opcode === "b0110111".U) -> true.B,  // LUI type
+    (MEMWB.io.out.opcode === "b0010111".U) -> true.B,  // AUIPC type
+    (MEMWB.io.out.opcode === "b1101111".U) -> true.B,  // JAL type
+    (MEMWB.io.out.opcode === "b1100111".U) -> true.B,  // JALR type
+    (MEMWB.io.out.opcode === "b0000011".U) -> true.B,  // MEMORY load type
+    (MEMWB.io.out.opcode === "b0010011".U) -> true.B,  // ALU register - immediate type
+    (MEMWB.io.out.opcode === "b0010011".U) -> true.B,  // SHIFT type
+    (MEMWB.io.out.opcode === "b0110011".U) -> true.B   // ALU register - register type
   ))
 
 
