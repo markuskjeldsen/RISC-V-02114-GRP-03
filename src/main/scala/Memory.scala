@@ -17,7 +17,7 @@ class Memory( ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 40
 
     val readData = Output(UInt(32.W))
   })
-  val memSign = io.func3(3)
+  val memSign = io.func3(2)
   // Instruction Memory
   val iMem = SyncReadMem(instMemWords, UInt(32.W))
 
