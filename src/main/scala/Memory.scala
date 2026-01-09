@@ -40,9 +40,6 @@ class Memory( ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 40
   // STORE LOGIC (SB / SH / SW)
   val writeMask = Wire(Vec(4, Bool()))
   writeMask := VecInit(Seq.fill(4)(false.B))
-
-
-
   val writeBytes = io.rs2Data.asTypeOf(Vec(4, UInt(8.W)))
 
   // LOAD LOGIC (LB/LBU/LH/LHU/LW)
