@@ -134,6 +134,8 @@ class CPU(ProgPath: String) extends Module {
   MEMWB.io.in.opcode := EXMEM.io.out.opcode
   MEMWB.io.in.result := EXMEM.io.out.result
   MEMWB.io.in.memoryVal := ProgMem.io.readData // placeholder the memory controller hasnt been implemented yet
+  MEMWB.io.in.func3 := EXMEM.io.out.func3
+  MEMWB.io.in.func7 := EXMEM.io.out.func7
 
 
   // --- WRITE BACK ---
