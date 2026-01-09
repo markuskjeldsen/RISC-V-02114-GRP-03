@@ -133,7 +133,7 @@ class CPU(ProgPath: String) extends Module {
   MEMWB.io.in.instruction := EXMEM.io.out.instruction
   MEMWB.io.in.opcode := EXMEM.io.out.opcode
   MEMWB.io.in.result := EXMEM.io.out.result
-  MEMWB.io.in.memoryVal := 0.U // placeholder the memory controller hasnt been implemented yet
+  MEMWB.io.in.memoryVal := ProgMem.io.readData // placeholder the memory controller hasnt been implemented yet
 
 
   // --- WRITE BACK ---
@@ -167,7 +167,7 @@ class CPU(ProgPath: String) extends Module {
     (MEMWB.io.out.opcode === "b0010011".U) -> true.B,  // SHIFT type
     (MEMWB.io.out.opcode === "b0110011".U) -> true.B   // ALU register - register type
   ))
-
+  //
 
 
 
