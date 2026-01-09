@@ -6,9 +6,9 @@ class HazardDetection() extends Module{
     // IFID instruction
     // IDEX instruction
     val in = IO(new Bundle {
-      val IFIDinstruction = input(UInt(32.W))
+      val IFIDinstruction = Input(UInt(32.W))
 
-      val IDEXinstruction = input(UInt(32.W))
+      val IDEXinstruction = Input(UInt(32.W))
 
     })
 
@@ -47,11 +47,11 @@ class HazardDetection() extends Module{
   // if next instruction needs the output of the previous
 
   // if IDEX does not have an output then no need for DataHazard
-  when( !(IDEXopcode === MemoryStoreInstruction || BranchInstruction) ){
-    // if the previous instruction has an output then check if the output address is the same and the input
-
-
+  when(IDEXopcode =/= MemoryStoreInstruction && IDEXopcode =/= BranchInstruction) {
+    // If opcode is NOT a store AND it is NOT a branch...
+    // Your hazard/forwarding logic here
   }
+
 
     // if IFID has input that is output of IDEX register
     // then stop PC
