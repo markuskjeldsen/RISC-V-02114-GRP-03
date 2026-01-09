@@ -25,8 +25,7 @@ class Control() extends Module {
         is("b101".U){ switch(io.func7) {
             is("b0000000".U) {io.ALUctrl := 6.U} // constant-shift right
             is("b0100000".U) {io.ALUctrl := 7.U} // constant-shift right arithmetic
-          }
-        }
+        }}
       }
     }
     is("b0110011".U){ // Integer register-register instructions
@@ -35,8 +34,7 @@ class Control() extends Module {
         is("b000".U) { switch(io.func7) {
             is("b0000000".U) {io.ALUctrl := 0.U} // add
             is("b0100000".U) {io.ALUctrl := 1.U} // subtract
-          }
-        }
+        }}
         is("b001".U){io.ALUctrl := 2.U} // register-shift left
         is("b010".U){io.ALUctrl := 3.U} // set less than
         is("b011".U){io.ALUctrl := 4.U} // set less than unsigned
@@ -44,11 +42,14 @@ class Control() extends Module {
         is("b101".U){switch(io.func7){
             is("b0000000".U){io.ALUctrl := 6.U} // register-shift right (logical)
             is("b0100000".U){io.ALUctrl := 7.U} // register-shift right (arithmetic)
-          }
-        }
+        }}
         is("b110".U){io.ALUctrl := 8.U} // or
         is("b111".U){io.ALUctrl := 9.U} // and
       }
     }
-  }
+    is("b0100011".U) { // Memory Store Instructions
+      io.ALUsrc := 1.U // use imm
+    }
+
+  } // end opcode switch
 }
