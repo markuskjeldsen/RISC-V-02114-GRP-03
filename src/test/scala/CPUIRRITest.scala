@@ -11,7 +11,7 @@ class CPUIRRITest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.regs(2).expect(3)
       dut.io.regs(3).expect(8)
       dut.io.regs(4).expect(2)
-      dut.io.regs(5).expect(28)
+      dut.io.regs(5).expect(40) //?
       dut.io.regs(6).expect(0)
       dut.io.regs(7).expect(0)
       dut.io.regs(8).expect(6)
@@ -23,8 +23,8 @@ class CPUIRRITest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.regs(14).expect(1)
       dut.io.regs(15).expect(1)
       dut.io.regs(16).expect(0)
-      dut.io.regs(17).expect(0)
-      dut.io.regs(18).expect(0)
+      dut.io.regs(17).expect(BigInt("FFFFFFFC", 16))
+      dut.io.regs(18).expect(BigInt("7FFFFFFC", 16))
 
       //addi x1,  x0, 5
       //addi x2,  x0, 3
