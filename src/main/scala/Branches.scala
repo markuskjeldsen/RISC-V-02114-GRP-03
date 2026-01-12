@@ -9,7 +9,7 @@ class Branches() extends Module {
     val out = Output(Bool()) //branch taken?
   })
 
-  io.out := false.B
+  io.out := 0.B
 
   switch(io.sel) {
     is(0.U) { io.out := (io.a0 === io.a1) } //BEQ

@@ -79,10 +79,11 @@ class CPU(ProgPath: String) extends Module {
   control.io.func3 := decoder.io.func3
   control.io.func7 := decoder.io.func7
 
+
   IDEX.io.in.ALUsrc := control.io.ALUsrc
   IDEX.io.in.ALUctrl := control.io.ALUctrl
   IDEX.io.in.ControlBool := (decoder.io.opcode === "b1100011".U)
-
+  IDEX.io.in.BranchCtrl := control.io.BranchCtrl
 
   // --- EXECUTE STAGE ---
   // here we execute with the ALU
@@ -99,16 +100,12 @@ class CPU(ProgPath: String) extends Module {
   val branches = Module(new Branches())
   branches.io.a0 := IDEX.io.out.rs1Data
   branches.io.a1 := IDEX.io.out.rs2Data
-  branches.io.sel := IDEX.io.out.ALUctrl
-  branches.io.out := IDEX.io.out.ControlBool
+  branches.io.sel := IDEX.io.out.BranchCtrl
+
   val branchTaken = IDEX.io.out.ControlBool && branches.io.out
   val branchTarget = IDEX.io.out.pc + IDEX.io.out.imm
 
-  when (branchTaken) {
-    PC := branchTarget
-  } .otherwise {
-    PC := PC + 4.U
-  }
+  when (branchTaken) {PC := branchTarget}
 
 
 

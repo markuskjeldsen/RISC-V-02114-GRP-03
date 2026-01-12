@@ -13,6 +13,9 @@ class IDEXBundle extends Bundle {
   val imm         = UInt(32.W)
   val ALUctrl     = UInt(4.W)
   val ControlBool = Bool()
+  val BranchCtrl = UInt(3.W)
+
+
 }
 
 // 2. Define the ID/EX Stage Module
