@@ -118,7 +118,7 @@ class Decoder() extends Module {
       io.rs2 := io.input(24,20)
       io.rs1 := io.input(19,15)
       io.func3 := io.input(14,12)
-      val rawImm = Cat(io.input(12), io.input(10,5), io.input(4,1), io.input(11))
+      val rawImm = Cat(io.input(31), io.input(7), io.input(30,25), io.input(11,8))
       io.imm := rawImm.asSInt.pad(32).asUInt
     }
   }
