@@ -6,7 +6,7 @@ class CPUBranchTest extends AnyFlatSpec with ChiselScalatestTester {
     test(new CPU("src/test/scala/programs/Branch.hex")).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       // Increase timeout to inf cycles
       dut.clock.setTimeout(0)
-      dut.clock.step(100)
+      dut.clock.step(60)
 
       dut.io.regs(13).expect(BigInt("FFFFFFFF",16))
 
