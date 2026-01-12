@@ -56,12 +56,12 @@ class Control() extends Module {
 
     is("b1100011".U){ // Branches configuration
       switch(io.func3){
-        is("b000".U){io.ALUctrl := 0.U}
-        is("b001".U){io.ALUctrl := 1.U}
-        is("b100".U){io.ALUctrl := 2.U}
-        is("b101".U){io.ALUctrl := 3.U}
-        is("b110".U){io.ALUctrl := 4.U}
-        is("b111".U){io.ALUctrl := 5.U}
+        is("b000".U){io.ALUctrl := 0.U} // BEQ
+        is("b001".U){io.ALUctrl := 1.U} // BNE
+        is("b100".U){io.ALUctrl := 2.U} // BLT
+        is("b101".U){io.ALUctrl := 3.U} // BGE
+        is("b110".U){io.ALUctrl := 4.U} // BLTU
+        is("b111".U){io.ALUctrl := 5.U} // BGEU
       }
     }
 
