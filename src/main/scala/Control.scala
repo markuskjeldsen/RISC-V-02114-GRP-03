@@ -54,5 +54,16 @@ class Control() extends Module {
       io.ALUsrc := 1.U // use imm
     }
 
+    is("b1100011".U){ // Branches configuration
+      switch(io.func3){
+        is("b000".U){io.ALUctrl := 0.U}
+        is("b001".U){io.ALUctrl := 1.U}
+        is("b100".U){io.ALUctrl := 2.U}
+        is("b101".U){io.ALUctrl := 3.U}
+        is("b110".U){io.ALUctrl := 4.U}
+        is("b111".U){io.ALUctrl := 5.U}
+      }
+    }
+
   } // end opcode switch
 }
