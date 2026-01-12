@@ -113,5 +113,13 @@ class Decoder() extends Module {
       val rawImm = Cat(io.input(31, 25), io.input(11, 7))
       io.imm   := rawImm.asSInt.pad(32).asUInt
     }
+
+    is("b1100011".U) { // Branch instructions
+      io.rs2 := io.input(24,20)
+      io.rs1 := io.input(19,15)
+      io.func3 := io.input(14,12)
+      val rawImm = Cat(io.input(12), io.input(10,5), io.input(4,1), io.input(11))
+      io.imm := rawImm.asSInt.pad(32).asUInt
+    }
   }
 }
