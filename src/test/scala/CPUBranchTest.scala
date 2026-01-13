@@ -12,7 +12,8 @@ class CPUBranchTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.regs(16).expect(BigInt("00000011",16))
       dut.io.regs(17).expect(BigInt("00000012",16))
       dut.io.regs(18).expect(BigInt("00000013",16))
-      dut.io.regs(19).expect(BigInt("FFFFFFFF",16))
+      dut.io.regs(19).expect(BigInt("00000014",16))
+      dut.io.regs(20).expect(BigInt("FFFFFFFF",16))
 
     }
   }
