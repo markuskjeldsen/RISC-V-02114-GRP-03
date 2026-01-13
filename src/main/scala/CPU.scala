@@ -87,11 +87,18 @@ class CPU(ProgPath: String) extends Module {
   control.io.func3 := decoder.io.func3
   control.io.func7 := decoder.io.func7
 
-
+// ALU signals
   IDEX.io.in.ALUsrc := control.io.ALUsrc
   IDEX.io.in.ALUctrl := control.io.ALUctrl
   IDEX.io.in.ControlBool := (decoder.io.opcode === "b1100011".U)
   IDEX.io.in.BranchCtrl := control.io.BranchCtrl
+
+  //Jump signals
+  //IDEX.io.in.ra := IFID.io.out.pc
+  //IDEX.io.in.targetAddress := decoder.io.imm + IFID.io.out.pc
+
+
+
 
   // --- EXECUTE STAGE ---
   // here we execute with the ALU
@@ -114,6 +121,9 @@ class CPU(ProgPath: String) extends Module {
   val branchTarget = IDEX.io.out.pc + IDEX.io.out.imm
 
 
+  // JUMP implementaion
+  //when(IDEX.io.out.opcode === "b1101111".U){PC:= IDEX.io.out.targetAddress}
+
 
   // --- EX/MEM PIPELINE REGISTER --------------------------------------------------------
   val EXMEM = Module(new EXMEM())
@@ -131,6 +141,7 @@ class CPU(ProgPath: String) extends Module {
   EXMEM.io.in.func7 := decoder.io.func7
   EXMEM.io.in.rs2Data := IDEX.io.out.rs2Data
 
+  //EXMEM.io.in.ra := IDEX.io.out.ra
 
   // --- MEMORY STAGE ---
   // here we ask the memory for information
@@ -153,6 +164,7 @@ class CPU(ProgPath: String) extends Module {
   MEMWB.io.in.memoryVal := ProgMem.io.readData // placeholder the memory controller hasnt been implemented yet
   MEMWB.io.in.func3 := EXMEM.io.out.func3
   MEMWB.io.in.func7 := EXMEM.io.out.func7
+
 
 
   // --- WRITE BACK ---
