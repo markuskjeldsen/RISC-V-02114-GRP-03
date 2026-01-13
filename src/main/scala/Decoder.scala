@@ -125,7 +125,7 @@ class Decoder() extends Module {
       io.rd := io.input(11,7)
       io.imm := io.input(31,12)
     }
-    is("b0010111 ".U){ //AUIPC intruction
+    is("b0010111".U){ //AUIPC intruction
       io.rd := io.input(11,7)
       io.imm := io.input(31,12)
     }
