@@ -10,7 +10,7 @@ class EXMEMBundle extends Bundle {
   val result      = UInt(32.W)
   val func3       = UInt(3.W)
   val func7       = UInt(7.W)
-  val rs2Data         = UInt(32.W)
+  val rs2Data     = UInt(32.W)
 }
 
 // 2. Define the EX/MEM Stage Module

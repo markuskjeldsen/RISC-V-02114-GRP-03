@@ -19,12 +19,20 @@ class CPU(ProgPath: String) extends Module {
   val PC = RegInit(0.U(32.W))
   val PCMuxSel = RegInit(0.U(2.W))
 
+  //PCMuxSel :=
+  val Hazard = 0.U //temp
+
   PC := MuxCase(0.U, Seq(
+    (Hazard === 0.U) -> (PC + 4.U), // this is the normal operation
+    (Hazard === 1.U) -> PC,     // dont increment
+  ))
+
+/*  PC := MuxCase(0.U, Seq(
     (PCMuxSel === 0.U) -> (PC + 4.U), // this is the normal operation
     (PCMuxSel === 1.U) -> PC,     // dont increment
     (PCMuxSel === 2.U) -> (decoder.io.imm << 1) //
   ))
-
+*/
 
   val ProgMem = Module(new Memory(ProgPath))
 
@@ -105,16 +113,17 @@ class CPU(ProgPath: String) extends Module {
   val branchTaken = IDEX.io.out.ControlBool && branches.io.out
   val branchTarget = IDEX.io.out.pc + IDEX.io.out.imm
 
-  when (branchTaken) {PC := branchTarget}
-
 
 
   // --- EX/MEM PIPELINE REGISTER --------------------------------------------------------
   val EXMEM = Module(new EXMEM())
   EXMEM.io.en := 1.U
   EXMEM.io.clear := 0.U
-
-  EXMEM.io.in.pc := IDEX.io.out.pc
+  when(branchTaken){
+    EXMEM.io.in.pc := branchTarget
+  }.otherwise{
+    EXMEM.io.in.pc := IDEX.io.out.pc
+  }
   EXMEM.io.in.instruction := IDEX.io.out.instruction
   EXMEM.io.in.opcode := IDEX.io.out.opcode
   EXMEM.io.in.result := ALU.io.out
