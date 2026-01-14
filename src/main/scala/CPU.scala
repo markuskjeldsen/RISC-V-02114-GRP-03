@@ -185,7 +185,7 @@ class CPU(ProgPath: String) extends Module {
     (MEMWB.io.out.opcode === "b0110011".U) -> MEMWB.io.out.result,           // ALU Reg
 
     // Jump instructions write the return address (PC + 4)
-    (MEMWB.io.out.opcode === "b1101111".U) -> (MEMWB.io.out.pc + 4.U),             // JAL
+    (MEMWB.io.out.opcode === "b1101111".U) -> (MEMWB.io.out.pc),             // JAL
     (MEMWB.io.out.opcode === "b1100111".U) -> (MEMWB.io.out.pc + 4.U),             // JALR
 
     // Load instructions use the data from memory
