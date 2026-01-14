@@ -11,6 +11,8 @@ class MEMWBBundle extends Bundle {
   val func7       = UInt(7.W)
   val result      = UInt(32.W)
   val memoryVal   = UInt(32.W)
+  val rd          = UInt(5.W)
+  val regWrite    = Bool()
 }
 
 // 2. Define the MEM/WB Stage Module

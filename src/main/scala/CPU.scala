@@ -36,8 +36,40 @@ class CPU(ProgPath: String) extends Module {
 
   val ProgMem = Module(new Memory(ProgPath))
 
+  // Forwarding begins
+  // 00 = no forwarding
+  // 10 = from EX/MEM
+  // 01 = from MEM/WB
+  val forwardA = Wire(UInt(2.W))
+  val forwardB = Wire(UInt(2.W))
+  forwardA := "b00".U
+  forwardB := "b00".U
 
+  when(EXMEM.io.out.regWrite &&
+    EXMEM.io.out.rd =/= 0.U &&
+    EXMEM.io.out.rd === IDEX.io.out.rs1) {
+    forwardA := "b10".U
+  }
 
+  when(EXMEM.io.out.regWrite &&
+    EXMEM.io.out.rd =/= 0.U &&
+    EXMEM.io.out.rd === IDEX.io.out.rs2) {
+    forwardB := "b10".U
+  }
+
+  when(MEMWB.io.out.regWrite &&
+    MEMWB.io.out.rd =/= 0.U &&
+    !(EXMEM.io.out.regWrite && EXMEM.io.out.rd === IDEX.io.out.rs1) &&
+    MEMWB.io.out.rd === IDEX.io.out.rs1) {
+    forwardA := "b01".U
+  }
+
+  when(MEMWB.io.out.regWrite &&
+    MEMWB.io.out.rd =/= 0.U &&
+    !(EXMEM.io.out.regWrite && EXMEM.io.out.rd === IDEX.io.out.rs2) &&
+    MEMWB.io.out.rd === IDEX.io.out.rs2) {
+    forwardB := "b01".U
+  }
   // --- FETCH STAGE ---
   ProgMem.io.instAddr := PC
   val current_instr = ProgMem.io.inst
@@ -71,13 +103,15 @@ class CPU(ProgPath: String) extends Module {
   val IDEX = Module(new IDEX())
   IDEX.io.en := 1.U
   IDEX.io.clear := 0.U
-
+  IDEX.io.in.rs1 := decoder.io.rs1
+  IDEX.io.in.rs2 := decoder.io.rs2
   IDEX.io.in.pc := IFID.io.out.pc
   IDEX.io.in.instruction := IFID.io.out.instruction
   IDEX.io.in.rs1Data := registers.io.rs1Data
   IDEX.io.in.rs2Data := registers.io.rs2Data
   IDEX.io.in.opcode := decoder.io.opcode
   IDEX.io.in.imm := decoder.io.imm
+  IDEX.io.in.regWrite := control.io.regWrite
 
   //hazardDetection.io.in.IFIDrs1
 
@@ -102,15 +136,26 @@ class CPU(ProgPath: String) extends Module {
 
   // --- EXECUTE STAGE ---
   // here we execute with the ALU
+  // Forwarded register operands
+  val rs1Forwarded = MuxCase(IDEX.io.out.rs1Data, Seq(
+    (forwardA === "b10".U) -> EXMEM.io.out.result,
+    (forwardA === "b01".U) -> registers.io.rdData
+  ))
+
+  val rs2Forwarded = MuxCase(IDEX.io.out.rs2Data, Seq(
+    (forwardB === "b10".U) -> EXMEM.io.out.result,
+    (forwardB === "b01".U) -> registers.io.rdData
+  ))
+
   val ALU = Module(new ALU())
   val ALUa = Mux(
     IDEX.io.out.opcode === "b0010111".U, // AUIPC
-    IDEX.io.out.pc,                      // use PC
-    IDEX.io.out.rs1Data                  // normal case)
+    IDEX.io.out.pc,                     // use PC
+    rs1Forwarded                        // forwarded rs1
   )
   ALU.io.a0 := ALUa
   ALU.io.a1 := MuxCase(0.U, Seq(
-    (IDEX.io.out.ALUsrc === 0.U) -> IDEX.io.out.rs2Data,
+    (IDEX.io.out.ALUsrc === 0.U) -> rs2Forwarded,
     (IDEX.io.out.ALUsrc === 1.U) -> IDEX.io.out.imm
   ))
   //ALU.io.a1 := IDEX_reg.imm // only for now, add a mux here later
@@ -118,8 +163,8 @@ class CPU(ProgPath: String) extends Module {
   ALU.io.sel := IDEX.io.out.ALUctrl
 
   val branches = Module(new Branches())
-  branches.io.a0 := IDEX.io.out.rs1Data
-  branches.io.a1 := IDEX.io.out.rs2Data
+  branches.io.a0 := rs1Forwarded
+  branches.io.a1 := rs2Forwarded
   branches.io.sel := IDEX.io.out.BranchCtrl
 
   val branchTaken = IDEX.io.out.ControlBool && branches.io.out
@@ -145,7 +190,8 @@ class CPU(ProgPath: String) extends Module {
   EXMEM.io.in.func3 := decoder.io.func3
   EXMEM.io.in.func7 := decoder.io.func7
   EXMEM.io.in.rs2Data := IDEX.io.out.rs2Data
-
+  EXMEM.io.in.rd := IDEX.io.out.instruction(11,7)
+  EXMEM.io.in.regWrite := IDEX.io.out.regWrite
   EXMEM.io.in.ra := IDEX.io.out.ra
 
   // --- MEMORY STAGE ---
@@ -169,6 +215,8 @@ class CPU(ProgPath: String) extends Module {
   MEMWB.io.in.memoryVal := ProgMem.io.readData // placeholder the memory controller hasnt been implemented yet
   MEMWB.io.in.func3 := EXMEM.io.out.func3
   MEMWB.io.in.func7 := EXMEM.io.out.func7
+  MEMWB.io.in.rd := EXMEM.io.out.rd
+  MEMWB.io.in.regWrite := EXMEM.io.out.regWrite
 
 
 

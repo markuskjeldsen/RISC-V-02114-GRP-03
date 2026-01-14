@@ -9,6 +9,8 @@ class IDEXBundle extends Bundle {
   val opcode      = UInt(7.W)
   val rs1Data     = UInt(32.W)
   val rs2Data     = UInt(32.W)
+  val rs1         = UInt(5.W)
+  val rs2         = UInt(5.W)
   val ALUsrc      = UInt(1.W)
   val imm         = UInt(32.W)
   val ALUctrl     = UInt(4.W)
@@ -16,6 +18,7 @@ class IDEXBundle extends Bundle {
   val BranchCtrl = UInt(3.W)
   val ra = UInt(5.W)
   val targetAddress = UInt(5.W)
+  val regWrite = Bool()
 }
 
 // 2. Define the ID/EX Stage Module

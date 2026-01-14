@@ -9,10 +9,21 @@ class Control() extends Module {
     val ALUsrc = Output(UInt(1.W))
     val ALUctrl = Output(UInt(4.W))
     val BranchCtrl = UInt(3.W)
+    val regWrite = Bool()
   })
     io.ALUsrc := 0.U
     io.ALUctrl := 0.U
     io.BranchCtrl := 0.U
+  io.regWrite := MuxLookup(io.opcode, false.B, Seq(
+    "b0110111".U -> true.B, // LUI
+    "b0010111".U -> true.B, // AUIPC
+    "b1101111".U -> true.B, // JAL
+    "b1100111".U -> true.B, // JALR
+    "b0000011".U -> true.B, // LOAD
+    "b0010011".U -> true.B, // ALU imm
+    "b0110011".U -> true.B  // ALU reg
+  ))
+
   switch (io.opcode){
     is( "b0010011".U ) { // Integer register-immediate instructions
       io.ALUsrc := 1.U
