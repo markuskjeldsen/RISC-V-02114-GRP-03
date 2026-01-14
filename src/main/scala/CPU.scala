@@ -36,6 +36,70 @@ class CPU(ProgPath: String) extends Module {
 
   val ProgMem = Module(new Memory(ProgPath))
 
+
+  // --- FETCH STAGE ---
+  ProgMem.io.instAddr := PC
+  val current_instr = ProgMem.io.inst
+  val current_pc    = PC
+
+
+
+  // --- IF/ID PIPELINE REGISTER --------------------------------------------------------
+  val IFID = Module(new IFID())
+  // Update the register with values from Fetch stage
+  IFID.io.in.instruction := current_instr
+  IFID.io.in.pc          := current_pc
+  IFID.io.en := 1.U
+  IFID.io.clear := 0.U
+
+
+
+  // --- DECODE STAGE ---
+  // Now you access them like this:
+  decoder.io.input := IFID.io.out.instruction
+
+
+  // Registers
+  val registers = Module(new Registers())
+  registers.io.rs1 := decoder.io.rs1
+  registers.io.rs2 := decoder.io.rs2
+  io.regs := registers.io.regs
+  // Instantiate pipeline registers
+  val IDEX = Module(new IDEX())
+  val EXMEM = Module(new EXMEM())
+  val MEMWB = Module(new MEMWB())
+  val control = Module(new Control())
+  // --- ID/EX PIPELINE REGISTER --------------------------------------------------------
+  IDEX.io.en := 1.U
+  IDEX.io.clear := 0.U
+  IDEX.io.in.rs1 := decoder.io.rs1
+  IDEX.io.in.rs2 := decoder.io.rs2
+  IDEX.io.in.pc := IFID.io.out.pc
+  IDEX.io.in.instruction := IFID.io.out.instruction
+  IDEX.io.in.rs1Data := registers.io.rs1Data
+  IDEX.io.in.rs2Data := registers.io.rs2Data
+  IDEX.io.in.opcode := decoder.io.opcode
+  IDEX.io.in.imm := decoder.io.imm
+  IDEX.io.in.regWrite := control.io.regWrite
+
+  //hazardDetection.io.in.IFIDrs1
+
+
+  dontTouch(control.io)
+  control.io.opcode := decoder.io.opcode
+  control.io.func3 := decoder.io.func3
+  control.io.func7 := decoder.io.func7
+
+// ALU signals
+  IDEX.io.in.ALUsrc := control.io.ALUsrc
+  IDEX.io.in.ALUctrl := control.io.ALUctrl
+  IDEX.io.in.ControlBool := (decoder.io.opcode === "b1100011".U)
+  IDEX.io.in.BranchCtrl := control.io.BranchCtrl
+
+  //Jump signals
+  IDEX.io.in.ra := IFID.io.out.pc
+  IDEX.io.in.targetAddress := decoder.io.imm + IFID.io.out.pc
+
   // Forwarding begins
   // 00 = no forwarding
   // 10 = from EX/MEM
@@ -70,68 +134,6 @@ class CPU(ProgPath: String) extends Module {
     MEMWB.io.out.rd === IDEX.io.out.rs2) {
     forwardB := "b01".U
   }
-  // --- FETCH STAGE ---
-  ProgMem.io.instAddr := PC
-  val current_instr = ProgMem.io.inst
-  val current_pc    = PC
-
-
-
-  // --- IF/ID PIPELINE REGISTER --------------------------------------------------------
-  val IFID = Module(new IFID())
-  // Update the register with values from Fetch stage
-  IFID.io.in.instruction := current_instr
-  IFID.io.in.pc          := current_pc
-  IFID.io.en := 1.U
-  IFID.io.clear := 0.U
-
-
-
-  // --- DECODE STAGE ---
-  // Now you access them like this:
-  decoder.io.input := IFID.io.out.instruction
-
-
-  // Registers
-  val registers = Module(new Registers())
-  registers.io.rs1 := decoder.io.rs1
-  registers.io.rs2 := decoder.io.rs2
-  io.regs := registers.io.regs
-
-
-  // --- ID/EX PIPELINE REGISTER --------------------------------------------------------
-  val IDEX = Module(new IDEX())
-  IDEX.io.en := 1.U
-  IDEX.io.clear := 0.U
-  IDEX.io.in.rs1 := decoder.io.rs1
-  IDEX.io.in.rs2 := decoder.io.rs2
-  IDEX.io.in.pc := IFID.io.out.pc
-  IDEX.io.in.instruction := IFID.io.out.instruction
-  IDEX.io.in.rs1Data := registers.io.rs1Data
-  IDEX.io.in.rs2Data := registers.io.rs2Data
-  IDEX.io.in.opcode := decoder.io.opcode
-  IDEX.io.in.imm := decoder.io.imm
-  IDEX.io.in.regWrite := control.io.regWrite
-
-  //hazardDetection.io.in.IFIDrs1
-
-  val control = Module(new Control())
-  dontTouch(control.io)
-  control.io.opcode := decoder.io.opcode
-  control.io.func3 := decoder.io.func3
-  control.io.func7 := decoder.io.func7
-
-// ALU signals
-  IDEX.io.in.ALUsrc := control.io.ALUsrc
-  IDEX.io.in.ALUctrl := control.io.ALUctrl
-  IDEX.io.in.ControlBool := (decoder.io.opcode === "b1100011".U)
-  IDEX.io.in.BranchCtrl := control.io.BranchCtrl
-
-  //Jump signals
-  IDEX.io.in.ra := IFID.io.out.pc
-  IDEX.io.in.targetAddress := decoder.io.imm + IFID.io.out.pc
-
-
 
 
   // --- EXECUTE STAGE ---
@@ -176,7 +178,6 @@ class CPU(ProgPath: String) extends Module {
 
 
   // --- EX/MEM PIPELINE REGISTER --------------------------------------------------------
-  val EXMEM = Module(new EXMEM())
   EXMEM.io.en := 1.U
   EXMEM.io.clear := 0.U
   when(branchTaken){
@@ -205,7 +206,6 @@ class CPU(ProgPath: String) extends Module {
 
 
   // --- MEM/WB PIPELINE REGISTER --------------------------------------------------------
-  val MEMWB = Module(new MEMWB())
   MEMWB.io.en := 1.U
   MEMWB.io.clear := 0.U
   MEMWB.io.in.pc := EXMEM.io.out.pc
