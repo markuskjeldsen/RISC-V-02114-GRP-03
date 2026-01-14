@@ -103,7 +103,12 @@ class CPU(ProgPath: String) extends Module {
   // --- EXECUTE STAGE ---
   // here we execute with the ALU
   val ALU = Module(new ALU())
-  ALU.io.a0 := IDEX.io.out.rs1Data
+  val ALUa = Mux(
+    IDEX.io.out.opcode === "b0010111".U, // AUIPC
+    IDEX.io.out.pc,                      // use PC
+    IDEX.io.out.rs1Data                  // normal case)
+  )
+  ALU.io.a0 := ALUa
   ALU.io.a1 := MuxCase(0.U, Seq(
     (IDEX.io.out.ALUsrc === 0.U) -> IDEX.io.out.rs2Data,
     (IDEX.io.out.ALUsrc === 1.U) -> IDEX.io.out.imm

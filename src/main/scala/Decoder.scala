@@ -123,11 +123,11 @@ class Decoder() extends Module {
     }
     is("b0110111".U){//LUI instruction
       io.rd := io.input(11,7)
-      io.imm := io.input(31,12)
+      io.imm := Cat(io.input(31,12),0.U(12.W))
     }
     is("b0010111".U){ //AUIPC intruction
       io.rd := io.input(11,7)
-      io.imm := io.input(31,12)
+      io.imm := Cat(io.input(31,12),0.U(12.W))
     }
     is("b1101111".U){// JAL
       val rawImm = Cat(io.input(31), io.input(21,12),io.input(22), io.input(30,23))

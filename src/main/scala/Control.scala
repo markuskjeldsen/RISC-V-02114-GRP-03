@@ -68,5 +68,16 @@ class Control() extends Module {
       }
     }
 
+    is("b0110111".U) { // LUI
+      io.ALUsrc  := 1.U
+      io.ALUctrl := 0.U // ADD
+    }
+
+    is("b0010111".U) { // AUIPC
+      io.ALUsrc  := 1.U
+      io.ALUctrl := 0.U // ADD
+    }
+
+
   } // end opcode switch
 }
