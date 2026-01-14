@@ -11,6 +11,16 @@ class CPUAUIPCTest extends AnyFlatSpec with ChiselScalatestTester {
 
       dut.io.regs(10).expect(BigInt("00002024",16)) //Test AUIPC
 
+    // AUIPC x10, 0x1
+    // ADDI x0, x0, 0 (NOP)
+      // ADDI x0, x0, 0 (NOP)
+    // ADDI x0, x0, 0 (NOP)
+    // ADDI x11, x0, 0
+    // ADDI x0, x0, 0 (NOP)
+    // ADDI x0, x0, 0 (NOP)
+    // ADDI x0, x0, 0 (NOP)
+    // AUIPC x10, 0x2
+
 
 
     }
