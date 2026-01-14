@@ -94,8 +94,8 @@ class CPU(ProgPath: String) extends Module {
   IDEX.io.in.BranchCtrl := control.io.BranchCtrl
 
   //Jump signals
-  //IDEX.io.in.ra := IFID.io.out.pc
-  //IDEX.io.in.targetAddress := decoder.io.imm + IFID.io.out.pc
+  IDEX.io.in.ra := IFID.io.out.pc
+  IDEX.io.in.targetAddress := decoder.io.imm + IFID.io.out.pc
 
 
 
@@ -127,7 +127,7 @@ class CPU(ProgPath: String) extends Module {
 
 
   // JUMP implementaion
-  //when(IDEX.io.out.opcode === "b1101111".U){PC:= IDEX.io.out.targetAddress}
+  when(IDEX.io.out.opcode === "b1101111".U){PC:= IDEX.io.out.targetAddress}
 
 
   // --- EX/MEM PIPELINE REGISTER --------------------------------------------------------
@@ -146,7 +146,7 @@ class CPU(ProgPath: String) extends Module {
   EXMEM.io.in.func7 := decoder.io.func7
   EXMEM.io.in.rs2Data := IDEX.io.out.rs2Data
 
-  //EXMEM.io.in.ra := IDEX.io.out.ra
+  EXMEM.io.in.ra := IDEX.io.out.ra
 
   // --- MEMORY STAGE ---
   // here we ask the memory for information
@@ -203,7 +203,7 @@ class CPU(ProgPath: String) extends Module {
     (MEMWB.io.out.opcode === "b0010011".U) -> true.B,  // SHIFT type
     (MEMWB.io.out.opcode === "b0110011".U) -> true.B   // ALU register - register type
   ))
-  //
+
 
 
 
