@@ -8,38 +8,30 @@ class CPUJalrTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.clock.setTimeout(0)
       dut.clock.step(30)
 
-      dut.io.regs(10).expect(BigInt("FFFFFFFF",16)) //Test Jalr
+      dut.io.regs(5).expect(BigInt("00000001",16)) //Test Jalr
+      dut.io.regs(6).expect(BigInt("0000002a",16)) //Test Jal
 
-      //addi x10, x0, 0         # default FAIL
+      //_start:
+      //# Clear registers
+      //  addi x1, x0, 0      # ra = 0
+      //addi x5, x0, 0      # t0 = 0 (status)
 
-      //# Build target address in x1 (PC-relative, no pseudo)
-      //auipc x1, 0
-      //addi  x1, x1, target
+      //# Call function using JAL
+      //  jal  x1, jal_target
 
-      //# NOPs so x1 is definitely written before jalr reads it
-      //  addi x0, x0, 0
-      //addi x0, x0, 0
-      //addi x0, x0, 0
-      //addi x0, x0, 0
-      //addi x0, x0, 0
+      //# If return works, execution resumes here
+      //addi x5, x0, 1      # t0 = 1 (PASS)
 
-      //here:
-      //  addi x0, x0, 0          # nop
-      //addi x0, x0, 0          # nop
-      //addi x0, x0, 0          # nop
+      //end:
+      //  j end               # infinite loop
 
-      //jalr x0, x1, 0          # jump to target using x1
+      //jal_target:
+      //# If we reach here, JAL jump worked
+      //addi x6, x0, 42     # t1 = 42 (marker)
 
-      //# If jalr fails, we fall through to fail
-      //fail:
-      //  addi x10, x0, 0
-      //beq  x0, x0, done
+      //# Return to caller
+      //jalr x0, x1, 0
 
-      //target:
-      //  addi x10, x0, -1        # PASS -> 0xFFFFFFFF
-
-      //done:
-      //  beq  x0, x0, done
     }
   }
 }
