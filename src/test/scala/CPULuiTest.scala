@@ -3,7 +3,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class CPULuiTest extends AnyFlatSpec with ChiselScalatestTester {
   "CPULuiTest" should "pass" in {
-    test(new CPU("src/test/scala/programs/Jal.hex")).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
+    test(new CPU("src/test/scala/programs/Lui.hex")).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       // Increase timeout to inf cycles
       dut.clock.setTimeout(0)
       dut.clock.step(20)
