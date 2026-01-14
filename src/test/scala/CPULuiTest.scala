@@ -8,7 +8,7 @@ class CPULuiTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.clock.setTimeout(0)
       dut.clock.step(20)
 
-      dut.io.regs(10).expect(BigInt("0000a002",16)) //Test LUI
+      dut.io.regs(12).expect(BigInt("0000a002",16)) //Test LUI
 
       //_start:
       //# Clear registers
