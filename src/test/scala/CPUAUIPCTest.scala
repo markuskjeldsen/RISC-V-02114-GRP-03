@@ -7,18 +7,12 @@ class CPUAUIPCTest extends AnyFlatSpec with ChiselScalatestTester {
     test(new CPU("src/test/scala/programs/AUIPC.hex")).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       // Increase timeout to inf cycles
       dut.clock.setTimeout(0)
-      dut.clock.step(20)
+      dut.clock.step(10)
 
-      dut.io.regs(10).expect(BigInt("00002024",16)) //Test AUIPC
+      dut.io.regs(10).expect(BigInt("0000200c",16)) //Test AUIPC
 
     // AUIPC x10, 0x1
-    // ADDI x0, x0, 0 (NOP)
-      // ADDI x0, x0, 0 (NOP)
-    // ADDI x0, x0, 0 (NOP)
     // ADDI x11, x0, 0
-    // ADDI x0, x0, 0 (NOP)
-    // ADDI x0, x0, 0 (NOP)
-    // ADDI x0, x0, 0 (NOP)
     // AUIPC x10, 0x2
 
 
