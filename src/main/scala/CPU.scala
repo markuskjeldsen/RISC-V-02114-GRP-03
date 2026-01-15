@@ -190,7 +190,7 @@ class CPU(ProgPath: String) extends Module {
   EXMEM.io.in.result := ALU.io.out
   EXMEM.io.in.func3 := decoder.io.func3
   EXMEM.io.in.func7 := decoder.io.func7
-  EXMEM.io.in.rs2Data := IDEX.io.out.rs2Data
+  EXMEM.io.in.rs2Data := rs2Forwarded
   EXMEM.io.in.rd := IDEX.io.out.instruction(11,7)
   EXMEM.io.in.regWrite := IDEX.io.out.regWrite
   EXMEM.io.in.ra := IDEX.io.out.ra
