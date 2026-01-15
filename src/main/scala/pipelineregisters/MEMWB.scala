@@ -13,6 +13,7 @@ class MEMWBBundle extends Bundle {
   val memoryVal   = UInt(32.W)
   val rd          = UInt(5.W)
   val regWrite    = Bool()
+  val ra          = UInt(5.W)
 }
 
 // 2. Define the MEM/WB Stage Module
@@ -31,6 +32,7 @@ class MEMWB extends Module {
   // Update Logic
   when(io.clear) {
     // Synchronous flush
+
     reg := 0.U.asTypeOf(new MEMWBBundle)
   }.elsewhen(io.en) {
     // Capture data from the Memory stage

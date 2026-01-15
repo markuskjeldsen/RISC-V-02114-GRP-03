@@ -96,7 +96,7 @@ class CPU(ProgPath: String) extends Module {
   IDEX.io.in.ControlBool := (decoder.io.opcode === "b1100011".U)
   IDEX.io.in.BranchCtrl := control.io.BranchCtrl
 
-  IDEX.io.in.ra := IFID.io.out.pc
+  IDEX.io.in.ra := IFID.io.out.pc + 4.U
   //Jump signals
   when(IDEX.io.out.opcode === "b1101111".U) {
 
@@ -228,7 +228,7 @@ class CPU(ProgPath: String) extends Module {
   MEMWB.io.in.func7 := EXMEM.io.out.func7
   MEMWB.io.in.rd := EXMEM.io.out.rd
   MEMWB.io.in.regWrite := EXMEM.io.out.regWrite
-
+  MEMWB.io.in.ra := EXMEM.io.out.ra
 
 
   // --- WRITE BACK ---
@@ -244,8 +244,8 @@ class CPU(ProgPath: String) extends Module {
     (MEMWB.io.out.opcode === "b0110011".U) -> MEMWB.io.out.result,           // ALU Reg
 
     // Jump instructions write the return address (PC + 4)
-    (MEMWB.io.out.opcode === "b1101111".U) -> (MEMWB.io.out.pc),             // JAL
-    (MEMWB.io.out.opcode === "b1100111".U) -> (MEMWB.io.out.pc + 4.U),             // JALR
+    (MEMWB.io.out.opcode === "b1101111".U) -> (MEMWB.io.out.ra), //MEMWB.io.out.pc),             // JAL
+    (MEMWB.io.out.opcode === "b1100111".U) -> (MEMWB.io.out.ra), //MEMWB.io.out.pc + 4.U),             // JALR
 
     // Load instructions use the data from memory
     (MEMWB.io.out.opcode === "b0000011".U) -> ProgMem.io.readData              // Load must be the actual data because data is one cycle late
