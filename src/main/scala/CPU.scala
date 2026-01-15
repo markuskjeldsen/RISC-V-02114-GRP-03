@@ -137,7 +137,6 @@ class CPU(ProgPath: String) extends Module {
     forwardB := "b10".U
   }
 
-
   when(MEMWB.io.out.regWrite &&
     MEMWB.io.out.rd =/= 0.U &&
     !(EXMEM.io.out.regWrite && EXMEM.io.out.rd === IDEX.io.out.rs1) &&
@@ -152,19 +151,33 @@ class CPU(ProgPath: String) extends Module {
     forwardB := "b01".U
   }
 
+  when(MEMWB.io.out.regWrite && MEMWB.io.out.loadedData &&
+      MEMWB.io.out.rd =/= 0.U &&
+      !(EXMEM.io.out.regWrite && EXMEM.io.out.rd === IDEX.io.out.rs1) &&
+      MEMWB.io.out.rd === IDEX.io.out.rs1) {
+    forwardA := "b11".U
+  }
+
+  when(MEMWB.io.out.regWrite && MEMWB.io.out.loadedData &&
+      MEMWB.io.out.rd =/= 0.U &&
+      !(EXMEM.io.out.regWrite && EXMEM.io.out.rd === IDEX.io.out.rs2) &&
+      MEMWB.io.out.rd === IDEX.io.out.rs2) {
+    forwardB := "b11".U
+  }
+
 
   // --- EXECUTE STAGE ---
   // here we execute with the ALU
   // Forwarded register operands
   val rs1Forwarded = MuxCase(IDEX.io.out.rs1Data, Seq(
     (forwardA === "b10".U) -> EXMEM.io.out.result,
-    (forwardA === "b01".U) -> MEMWB.io.out.result//registers.io.rdData
+    (forwardA === "b01".U) -> MEMWB.io.out.result, // Added comma
     (forwardA === "b11".U) -> ProgMem.io.readData
   ))
 
   val rs2Forwarded = MuxCase(IDEX.io.out.rs2Data, Seq(
     (forwardB === "b10".U) -> EXMEM.io.out.result,
-    (forwardB === "b01".U) -> MEMWB.io.out.result//registers.io.rdData
+    (forwardB === "b01".U) -> MEMWB.io.out.result, // Added comma
     (forwardB === "b11".U) -> ProgMem.io.readData
   ))
 
