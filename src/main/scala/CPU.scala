@@ -12,19 +12,17 @@ class CPU(ProgPath: String) extends Module {
     val regs = Output(Vec(32,UInt(32.W)))
   })
   val decoder = Module(new Decoder())
-  //val hazardDetection = Module(new HazardDetection())
 
 
 
   val PC = RegInit(0.U(32.W))
-  val PCMuxSel = RegInit(0.U(2.W))
+  val HazardDetection = Module(new HazardDetection())
 
-  //PCMuxSel :=
-  val Hazard = 0.U //temp
+
 
   PC := MuxCase(0.U, Seq(
-    (Hazard === 0.U) -> (PC + 4.U), // this is the normal operation
-    (Hazard === 1.U) -> PC,     // dont increment
+    (HazardDetection.io.out.PCen === 1.U) -> (PC + 4.U), // this is the normal operation
+    (HazardDetection.io.out.PCen === 0.U) -> PC,     // dont increment
   ))
 
 /*  PC := MuxCase(0.U, Seq(
@@ -35,6 +33,7 @@ class CPU(ProgPath: String) extends Module {
 */
 
   val ProgMem = Module(new Memory(ProgPath))
+
 
 
   // --- FETCH STAGE ---
@@ -49,8 +48,8 @@ class CPU(ProgPath: String) extends Module {
   // Update the register with values from Fetch stage
   IFID.io.in.instruction := current_instr
   IFID.io.in.pc          := current_pc
-  IFID.io.en := 1.U
-  IFID.io.clear := 0.U
+  IFID.io.en := HazardDetection.io.out.IFIDen
+  IFID.io.clear := HazardDetection.io.out.IFIDclear
 
 
 
@@ -70,8 +69,8 @@ class CPU(ProgPath: String) extends Module {
   val MEMWB = Module(new MEMWB())
   val control = Module(new Control())
   // --- ID/EX PIPELINE REGISTER --------------------------------------------------------
-  IDEX.io.en := 1.U
-  IDEX.io.clear := 0.U
+  IDEX.io.en := HazardDetection.io.out.IDEXen
+  IDEX.io.clear := HazardDetection.io.out.IDEXclear
   IDEX.io.in.rs1 := decoder.io.rs1
   IDEX.io.in.rs2 := decoder.io.rs2
   IDEX.io.in.pc := IFID.io.out.pc
@@ -82,7 +81,14 @@ class CPU(ProgPath: String) extends Module {
   IDEX.io.in.imm := decoder.io.imm
   IDEX.io.in.regWrite := control.io.regWrite
 
-  //hazardDetection.io.in.IFIDrs1
+  HazardDetection.io.in.IFIDinstruction := IFID.io.out.instruction
+  HazardDetection.io.in.IDEXinstruction := IDEX.io.out.instruction
+  HazardDetection.io.in.EXMEMinstruction := EXMEM.io.out.instruction
+  HazardDetection.io.in.MEMWBinstruction := MEMWB.io.out.instruction
+
+
+
+
 
 
   dontTouch(control.io)
