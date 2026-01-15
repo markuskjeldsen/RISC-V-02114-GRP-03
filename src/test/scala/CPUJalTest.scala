@@ -25,7 +25,7 @@ class CPUJalTest extends AnyFlatSpec with ChiselScalatestTester {
 
       //end:
       //  jal x0, end               #infinite loop
-      //  addi x0, x0, 0
+      //  addi x12, x0, 42
       //addi x0, x0, 0
 
       //jal_target:
