@@ -14,6 +14,7 @@ class EXMEMBundle extends Bundle {
   val ra          = UInt(5.W)
   val rd          = UInt(5.W)
   val regWrite    = Bool()
+  val loadedData    = Bool()
 }
 
 // 2. Define the EX/MEM Stage Module

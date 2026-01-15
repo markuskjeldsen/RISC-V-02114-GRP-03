@@ -13,6 +13,7 @@ class MEMWBBundle extends Bundle {
   val memoryVal   = UInt(32.W)
   val rd          = UInt(5.W)
   val regWrite    = Bool()
+  val loadedData    = Bool()
   val ra          = UInt(5.W)
 }
 

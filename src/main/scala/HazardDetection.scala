@@ -1,127 +1,99 @@
 import chisel3._
 import chisel3.util._
 
-class HazardDetection() extends Module{
+class HazardDetection extends Module {
   val io = IO(new Bundle {
     val in = Input(new Bundle {
-      val IFIDinstruction = Input(UInt(32.W))
-      val IDEXinstruction = Input(UInt(32.W))
-      val EXMEMinstruction = Input(UInt(32.W))
-      val MEMWBinstruction = Input(UInt(32.W))
+      // Raw Instructions
+      val IFIDinstruction  = UInt(32.W)
+      val IDEXinstruction  = UInt(32.W)
 
+      // OPTIONAL: Usually you simply take the boolean result from the Branch Unit
+      // false = PC+4, true = Branch Target
+      val pcFromTakenBranch = Bool()
     })
 
     val out = Output(new Bundle {
-      val IFIDen = Output(Bool())
-      val IFIDclear = Output(Bool())
+      val IFIDen    = Bool()
+      val IFIDclear = Bool() // Flush bit
 
-      val IDEXen = Output(Bool())
-      val IDEXclear = Output(Bool())
+      val IDEXen    = Bool()
+      val IDEXclear = Bool() // Flush bit (insert bubble)
 
-      val PCen = Output(Bool())
+      val PCen      = Bool()
     })
   })
 
-  // Corrected bit extraction: (High, Low)
-  val IFIDrs1    = io.in.IFIDinstruction(19, 15)
-  val IFIDrs2    = io.in.IFIDinstruction(24, 20)
-  val IFIDrd     = io.in.IFIDinstruction(11, 7)
-  val IFIDopcode = io.in.IFIDinstruction(6, 0) // RISC-V opcodes are 7 bits (6:0)
+  // 1. Extract Fields from IF/ID (Current Instruction in Decode)
+  val rs1_addr_IFID = io.in.IFIDinstruction(19, 15)
+  val rs2_addr_IFID = io.in.IFIDinstruction(24, 20)
 
-  val IDEXrs1    = io.in.IDEXinstruction(19, 15)
-  val IDEXrs2    = io.in.IDEXinstruction(24, 20)
-  val IDEXrd     = io.in.IDEXinstruction(11, 7)
-  val IDEXopcode = io.in.IDEXinstruction(6, 0) // Fixed reference to IDEXinstruction
+  // 2. Extract Fields from ID/EX (Previous Instruction in Execute)
+  val rd_addr_IDEX  = io.in.IDEXinstruction(11, 7)
+  val opcode_IDEX   = io.in.IDEXinstruction(6, 0)
 
-  val EXMEMrs1    = io.in.EXMEMinstruction(19, 15)
-  val EXMEMrs2    = io.in.EXMEMinstruction(24, 20)
-  val EXMEMrd     = io.in.EXMEMinstruction(11, 7)
-  val EXMEMopcode = io.in.EXMEMinstruction(6, 0)
+  // RISC-V Opcode Constants
+  val LOAD_OP   = "b0000011".U
 
-  val MEMWBrs1    = io.in.MEMWBinstruction(19, 15)
-  val MEMWBrs2    = io.in.MEMWBinstruction(24, 20)
-  val MEMWBrd     = io.in.MEMWBinstruction(11, 7)
-  val MEMWBopcode = io.in.MEMWBinstruction(6, 0)
+  // 3. Determine instruction usage
+  // We need to know if the instruction in ID/EX is actually a Load
+  val idex_is_load = opcode_IDEX === LOAD_OP
 
+  // We need to know if the instruction in IF/ID uses rs1 or rs2.
+  // We can look at the opcode of the instruction currently in Decode.
+  val opcode_IFID = io.in.IFIDinstruction(6, 0)
 
-  val MemoryStoreInstruction = "b0100011".U
-  val MemoryLoadInstruction = "b0000011".U
-  val BranchInstruction = "b1100011".U
+  // R-Type, I-Type, S-Type, B-Type usually use RS1. U-Type (LUI/AUIPC) and J-Type (JAL) do not.
+  // Simplified check: LUI(0110111), AUIPC(0010111), JAL(1101111) don't use RS1.
+  val uses_rs1 = opcode_IFID =/= "b0110111".U && opcode_IFID =/= "b0010111".U && opcode_IFID =/= "b1101111".U
 
+  // R-Type, S-Type, B-Type use RS2. I-Type, U-Type, J-Type do not.
+  // Simply: Only R-Type (0110011), Store (0100011), Branch (1100011) use RS2.
+  val uses_rs2 = opcode_IFID === "b0110011".U || opcode_IFID === "b0100011".U || opcode_IFID === "b1100011".U
 
-  // standard output state
-  io.out.PCen := 1.U
+  // ---------------------------------------------
+  // Default State: Everything Defines Normal Flow
+  // ---------------------------------------------
+  io.out.PCen      := true.B
+  io.out.IFIDen    := true.B
+  io.out.IFIDclear := false.B
+  io.out.IDEXen    := true.B
+  io.out.IDEXclear := false.B
 
-  io.out.IFIDen := 1.U
-  io.out.IFIDclear := 0.U
+  // ---------------------------------------------
+  // HAZARD 1: Load-Use Hazard
+  // ---------------------------------------------
+  // Scenario:
+  // ID/EX has a Load Instruction.
+  // IF/ID depends on that Load's result (rd).
+  // Logic: Stall 1 Cycle.
 
-  io.out.IDEXen := 1.U
-  io.out.IDEXclear := 0.U
+  val stall_condition = idex_is_load && (rd_addr_IDEX =/= 0.U) &&
+      ((uses_rs1 && rs1_addr_IFID === rd_addr_IDEX) ||
+          (uses_rs2 && rs2_addr_IFID === rd_addr_IDEX))
 
+  when(stall_condition) {
+    // 1. Freeze PC (Prevent fetching new instruction)
+    io.out.PCen   := false.B
 
+    // 2. Freeze IF/ID (Keep the dependent instruction in Decode to try again next cycle)
+    io.out.IFIDen := false.B
 
-  // Structual Hazard // A required resource is busy
-
-
-  // Data hazard // Need to wait for previous instruction to complete its data read/write
-  // if next instruction needs the output of the previous
-
-  // if IDEX does not have an output then no need for DataHazard
-  when(IDEXopcode =/= MemoryStoreInstruction && IDEXopcode =/= BranchInstruction) {
-    // If opcode is NOT a store AND it is NOT a branch...
-    // Your hazard/forwarding logic here
+    // 3. Flush ID/EX (Send NOPs to Execute for one cycle, creating a bubble)
+    // IMPORTANT: We do not disable IDEXen. We want it to tick, but capture 0 (bubble).
+    io.out.IDEXclear := true.B
   }
 
+  // ---------------------------------------------
+  // HAZARD 2: Control Hazard (Branch Taken)
+  // ---------------------------------------------
+  // If the logic elsewhere decides a branch is taken, the instruction
+  // currently in IF/ID is wrong (fetched from PC+4). It must be flushed.
 
-    // if IFID has input that is output of IDEX register
-    // then stop PC
-    // disable IFID
-    // clear and disable the IDEX, no new instruction is loaded into IDEX and it clears the output
-    // keep this for 2 cycles
-
-
-
-
-  // Control Hazard // Deciding on control action depends on previous instruction
-
-
-
-  // Load-Use Data Hazard
-  // Can’t always avoid stalls by forwarding
-  // If value not computed when needed
-  // Can’t forward backward in time!
-
-  // ld x1 0, x2
-  // sub x4, x1, x5
-
-  // if no forwarding then 2 cycles stalled.
-  // since WB must be done, before anything can be done IFID must be hold and PC must be held as well
-
-  // when load use, hold PC and IFID for 2 cycles
-  when(IDEXopcode === MemoryLoadInstruction && IDEXrd =/= 0.U &&
-      (IDEXrd === IFIDrs1 || IDEXrd === IFIDrs2)) {
-      // stall for 1 cycles
-    io.out.PCen := 0.U
-
-    io.out.IFIDen := 0.U
-    io.out.IFIDclear := 0.U
-
-    io.out.IDEXen := 1.U
-    io.out.IDEXclear := 1.U
+  when(io.in.pcFromTakenBranch) {
+    io.out.IFIDclear := true.B
+    // If the branch decision happens in Execute stage, you might need to flush ID/EX too,
+    // depending on your design. Usually, if decision is in EX, you flush ID/EX and IF/ID.
+    io.out.IDEXclear := true.B
   }
-  // when load use, hold PC and IFID for 1 cycles
-  when(EXMEMopcode === MemoryLoadInstruction && // if memory load
-      (EXMEMrd === IFIDrs1 || EXMEMrd === IFIDrs2)) { // and the next instruction will use the output
-      // stall for 1 cycle
-    io.out.PCen := 0.U
-
-    io.out.IFIDen := 0.U
-    io.out.IFIDclear := 0.U
-
-    io.out.IDEXen := 1.U
-    io.out.IDEXclear := 1.U
-  }
-
-
-
 }

@@ -80,11 +80,10 @@ class CPU(ProgPath: String) extends Module {
   IDEX.io.in.opcode := decoder.io.opcode
   IDEX.io.in.imm := decoder.io.imm
   IDEX.io.in.regWrite := control.io.regWrite
+  IDEX.io.in.loadedData := control.io.loadedData
 
   HazardDetection.io.in.IFIDinstruction := IFID.io.out.instruction
   HazardDetection.io.in.IDEXinstruction := IDEX.io.out.instruction
-  HazardDetection.io.in.EXMEMinstruction := EXMEM.io.out.instruction
-  HazardDetection.io.in.MEMWBinstruction := MEMWB.io.out.instruction
 
 
 
@@ -138,6 +137,7 @@ class CPU(ProgPath: String) extends Module {
     forwardB := "b10".U
   }
 
+
   when(MEMWB.io.out.regWrite &&
     MEMWB.io.out.rd =/= 0.U &&
     !(EXMEM.io.out.regWrite && EXMEM.io.out.rd === IDEX.io.out.rs1) &&
@@ -159,11 +159,13 @@ class CPU(ProgPath: String) extends Module {
   val rs1Forwarded = MuxCase(IDEX.io.out.rs1Data, Seq(
     (forwardA === "b10".U) -> EXMEM.io.out.result,
     (forwardA === "b01".U) -> MEMWB.io.out.result//registers.io.rdData
+    (forwardA === "b11".U) -> ProgMem.io.readData
   ))
 
   val rs2Forwarded = MuxCase(IDEX.io.out.rs2Data, Seq(
     (forwardB === "b10".U) -> EXMEM.io.out.result,
     (forwardB === "b01".U) -> MEMWB.io.out.result//registers.io.rdData
+    (forwardB === "b11".U) -> ProgMem.io.readData
   ))
 
   val ALU = Module(new ALU())
@@ -188,6 +190,7 @@ class CPU(ProgPath: String) extends Module {
 
   val branchTaken = IDEX.io.out.ControlBool && branches.io.out
   val branchTarget = IDEX.io.out.pc + IDEX.io.out.imm
+  HazardDetection.io.in.pcFromTakenBranch := branchTaken
 
 
   // JUMP implementaion
@@ -211,6 +214,7 @@ class CPU(ProgPath: String) extends Module {
   EXMEM.io.in.rd := IDEX.io.out.instruction(11,7)
   EXMEM.io.in.regWrite := IDEX.io.out.regWrite
   EXMEM.io.in.ra := IDEX.io.out.ra
+  EXMEM.io.in.loadedData := IDEX.io.out.loadedData
 
   // --- MEMORY STAGE ---
   // here we ask the memory for information
@@ -235,6 +239,9 @@ class CPU(ProgPath: String) extends Module {
   MEMWB.io.in.rd := EXMEM.io.out.rd
   MEMWB.io.in.regWrite := EXMEM.io.out.regWrite
   MEMWB.io.in.ra := EXMEM.io.out.ra
+  MEMWB.io.in.loadedData := EXMEM.io.out.loadedData
+
+
 
 
   // --- WRITE BACK ---

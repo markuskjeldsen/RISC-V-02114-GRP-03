@@ -10,6 +10,7 @@ class Control() extends Module {
     val ALUctrl = Output(UInt(4.W))
     val BranchCtrl = UInt(3.W)
     val regWrite = Bool()
+    val loadedData = Output(Bool())
   })
     io.ALUsrc := 0.U
     io.ALUctrl := 0.U
@@ -23,6 +24,12 @@ class Control() extends Module {
     "b0010011".U -> true.B, // ALU imm
     "b0110011".U -> true.B  // ALU reg
   ))
+
+  io.loadedData := false.B
+  when(io.opcode === "b0000011".U) {
+    io.loadedData := true.B
+  }
+
 
   switch (io.opcode){
     is( "b0010011".U ) { // Integer register-immediate instructions

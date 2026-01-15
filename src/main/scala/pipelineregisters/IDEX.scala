@@ -19,6 +19,7 @@ class IDEXBundle extends Bundle {
   val ra = UInt(5.W)
  // val targetAddress = UInt(5.W)
   val regWrite = Bool()
+  val loadedData = Bool()
 }
 
 // 2. Define the ID/EX Stage Module
