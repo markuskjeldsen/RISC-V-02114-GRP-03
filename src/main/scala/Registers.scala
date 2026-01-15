@@ -20,12 +20,25 @@ class Registers extends Module {
   }))
 
   io.regs := regs
-  // ignore writes to x0
+
+  // Write logic (remains the same)
+  // Writes occur at the rising edge of the clock
   when(io.regWrite && io.rd =/= 0.U) {
     regs(io.rd) := io.rdData
   }
 
-  // x0 always reads as zero
-  io.rs1Data := Mux(io.rs1 === 0.U, 0.U, regs(io.rs1))
-  io.rs2Data := Mux(io.rs2 === 0.U, 0.U, regs(io.rs2))
+  // --- READ LOGIC WITH FORWARDING ---
+
+  // For rs1:
+  // 1. If reading x0, always return 0.
+  // 2. If reading the same address currently being written to (and it's not x0), return the new data.
+  // 3. Otherwise, read from the register file.
+  io.rs1Data := Mux(io.rs1 === 0.U, 0.U,
+    Mux(io.regWrite && io.rs1 === io.rd, io.rdData,
+      regs(io.rs1)))
+
+  // For rs2 (Same logic):
+  io.rs2Data := Mux(io.rs2 === 0.U, 0.U,
+    Mux(io.regWrite && io.rs2 === io.rd, io.rdData,
+      regs(io.rs2)))
 }
