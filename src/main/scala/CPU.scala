@@ -96,9 +96,20 @@ class CPU(ProgPath: String) extends Module {
   IDEX.io.in.ControlBool := (decoder.io.opcode === "b1100011".U)
   IDEX.io.in.BranchCtrl := control.io.BranchCtrl
 
-  //Jump signals
   IDEX.io.in.ra := IFID.io.out.pc
-  IDEX.io.in.targetAddress := decoder.io.imm + IFID.io.out.pc
+  //Jump signals
+  when(IDEX.io.out.opcode === "b1101111".U) {
+
+    PC := MuxCase(0.U, Seq(
+
+      // JAL target = PC + imm
+      (decoder.io.opcode === "b1101111".U) -> (IFID.io.out.pc + decoder.io.imm).asUInt,
+
+      // JALR target = rs1 + imm
+      (decoder.io.opcode === "b1100111".U) -> (decoder.io.rs1 + decoder.io.imm).asUInt
+
+    ))
+  }
 
   // Forwarding begins
   // 00 = no forwarding
@@ -141,12 +152,12 @@ class CPU(ProgPath: String) extends Module {
   // Forwarded register operands
   val rs1Forwarded = MuxCase(IDEX.io.out.rs1Data, Seq(
     (forwardA === "b10".U) -> EXMEM.io.out.result,
-    (forwardA === "b01".U) -> registers.io.rdData
+    (forwardA === "b01".U) -> MEMWB.io.out.result//registers.io.rdData
   ))
 
   val rs2Forwarded = MuxCase(IDEX.io.out.rs2Data, Seq(
     (forwardB === "b10".U) -> EXMEM.io.out.result,
-    (forwardB === "b01".U) -> registers.io.rdData
+    (forwardB === "b01".U) -> MEMWB.io.out.result//registers.io.rdData
   ))
 
   val ALU = Module(new ALU())
@@ -174,7 +185,7 @@ class CPU(ProgPath: String) extends Module {
 
 
   // JUMP implementaion
-  when(IDEX.io.out.opcode === "b1101111".U){PC:= IDEX.io.out.targetAddress}
+ // when(IDEX.io.out.opcode === "b1101111".U){PC:= IDEX.io.out.targetAddress}
 
 
   // --- EX/MEM PIPELINE REGISTER --------------------------------------------------------
