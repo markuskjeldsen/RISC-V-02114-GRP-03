@@ -5,6 +5,7 @@ import chisel3.util.experimental.loadMemoryFromFile
 class Memory(ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 4096) extends Module {
   val io = IO(new Bundle {
     val instAddr = Input(UInt(32.W))
+    val instClear = Input(Bool())
     val inst     = Output(UInt(32.W))
 
     // Data memory
