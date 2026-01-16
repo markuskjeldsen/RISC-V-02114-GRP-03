@@ -5,6 +5,7 @@ import chisel3.util.experimental.loadMemoryFromFile
 class Memory(ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 4096) extends Module {
   val io = IO(new Bundle {
     val instAddr = Input(UInt(32.W))
+    val instClear = Input(Bool())
     val inst     = Output(UInt(32.W))
 
     // Data memory
@@ -23,7 +24,14 @@ class Memory(ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 409
 
   // We don't need an extra Reg here if we want 1-cycle latency
   // instAddr -> iMem -> io.inst (available next cycle)
-  io.inst := iMem.read(io.instAddr(31, 2), true.B)
+
+
+  when (io.instClear) {
+    io.inst := "h00000013".U
+  } .otherwise {
+    io.inst := iMem.read(io.instAddr(31, 2), true.B)
+  }
+
 
   // --- Data Memory (DMEM) ---
   val dMem = SyncReadMem(dataMemWords, Vec(4, UInt(8.W)))
