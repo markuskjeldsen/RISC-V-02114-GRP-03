@@ -131,7 +131,7 @@ class Decoder() extends Module {
     }
     is("b1101111".U){// JAL
       val rawImm = Cat(io.input(31), io.input(21,12),io.input(22), io.input(30,23))
-      io.imm := rawImm.asSInt.pad(32).asUInt
+      io.imm := rawImm.asSInt.pad(32).asUInt << 1.U
     }
     is("b1100111".U){ // JALR
       io.rd := io.input(11,7)

@@ -13,16 +13,20 @@ class CPU(ProgPath: String) extends Module {
   })
   val decoder = Module(new Decoder())
 
+  val IDEX = Module(new IDEX())
+  val EXMEM = Module(new EXMEM())
+  val MEMWB = Module(new MEMWB())
+  val control = Module(new Control())
+
 
 
   val PC = RegInit(0.U(32.W))
   val HazardDetection = Module(new HazardDetection())
 
-
-
   PC := MuxCase(0.U, Seq(
-    (HazardDetection.io.out.PCen === 1.U) -> (PC + 4.U), // this is the normal operation
+    (HazardDetection.io.out.PCen === 1.U && ( !IDEX.io.out.opcode === "b1101111".U  ) ) -> (PC + 4.U), // this is the normal operation
     (HazardDetection.io.out.PCen === 0.U) -> PC,     // dont increment
+    (HazardDetection.io.out.PCen === 1.U && IDEX.io.out.opcode === "b1101111".U ) -> (PC), // this is the normal operation
   ))
 
 /*  PC := MuxCase(0.U, Seq(
@@ -64,10 +68,6 @@ class CPU(ProgPath: String) extends Module {
   registers.io.rs2 := decoder.io.rs2
   io.regs := registers.io.regs
   // Instantiate pipeline registers
-  val IDEX = Module(new IDEX())
-  val EXMEM = Module(new EXMEM())
-  val MEMWB = Module(new MEMWB())
-  val control = Module(new Control())
   // --- ID/EX PIPELINE REGISTER --------------------------------------------------------
   IDEX.io.en := HazardDetection.io.out.IDEXen
   IDEX.io.clear := HazardDetection.io.out.IDEXclear
@@ -101,10 +101,26 @@ class CPU(ProgPath: String) extends Module {
   IDEX.io.in.ControlBool := (decoder.io.opcode === "b1100011".U)
   IDEX.io.in.BranchCtrl := control.io.BranchCtrl
 
-  IDEX.io.in.ra := IFID.io.out.pc + 4.U
-  //Jump signals
-  when(IDEX.io.out.opcode === "b1101111".U) {
 
+  EXMEM.io.in.ra := IDEX.io.out.pc //+ 4.U
+  //Jump signals
+  when(IDEX.io.out.opcode === "b1101111".U){
+    PC := (IDEX.io.out.pc + IDEX.io.out.imm).asUInt
+  }
+  when(IDEX.io.out.opcode === "b1100111".U) {
+    PC := (IDEX.io.out.rs1 + IDEX.io.out.imm).asUInt
+  }
+ /* IDEX.io.in.ra := IFID.io.out.pc + 4.U
+  //Jump signals
+  when(decoder.io.opcode === "b1101111".U){
+    PC := (IFID.io.out.pc + decoder.io.imm).asUInt
+  }
+  when(decoder.io.opcode === "b1100111".U) {
+    PC := (decoder.io.rs1 + decoder.io.imm).asUInt
+  }
+*/
+
+  /*when(IDEX.io.out.opcode === "b1101111".U) {
     PC := MuxCase(0.U, Seq(
 
       // JAL target = PC + imm
@@ -114,7 +130,7 @@ class CPU(ProgPath: String) extends Module {
       (decoder.io.opcode === "b1100111".U) -> (decoder.io.rs1 + decoder.io.imm).asUInt
 
     ))
-  }
+  }*/
 
   // Forwarding begins
   // 00 = no forwarding
@@ -225,7 +241,7 @@ class CPU(ProgPath: String) extends Module {
   EXMEM.io.in.rs2Data := rs2Forwarded
   EXMEM.io.in.rd := IDEX.io.out.instruction(11,7)
   EXMEM.io.in.regWrite := IDEX.io.out.regWrite
-  EXMEM.io.in.ra := IDEX.io.out.ra
+  //EXMEM.io.in.ra := IDEX.io.out.ra
   EXMEM.io.in.loadedData := IDEX.io.out.loadedData
 
   // --- MEMORY STAGE ---
