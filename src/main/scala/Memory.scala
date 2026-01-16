@@ -24,7 +24,16 @@ class Memory(ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 409
 
   // We don't need an extra Reg here if we want 1-cycle latency
   // instAddr -> iMem -> io.inst (available next cycle)
-  io.inst := iMem.read(io.instAddr(31, 2), true.B)
+
+  val instReg = RegInit("h00000013".U)
+
+  when (io.instClear) {
+    instReg := "h00000013".U
+  } .otherwise {
+    instReg := iMem.read(io.instAddr(31, 2), true.B)
+  }
+
+  io.inst := instReg
 
   // --- Data Memory (DMEM) ---
   val dMem = SyncReadMem(dataMemWords, Vec(4, UInt(8.W)))
