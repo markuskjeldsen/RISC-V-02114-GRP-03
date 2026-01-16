@@ -18,48 +18,33 @@ class CPU(ProgPath: String) extends Module {
   val MEMWB = Module(new MEMWB())
   val control = Module(new Control())
 
-
-
-  val PC = RegInit(0.U(32.W))
   val HazardDetection = Module(new HazardDetection())
 
-  PC := MuxCase(0.U, Seq(
-    (HazardDetection.io.out.PCen === 1.U && ( !IDEX.io.out.opcode === "b1101111".U  ) ) -> (PC + 4.U), // this is the normal operation
-    (HazardDetection.io.out.PCen === 0.U) -> PC,     // dont increment
-    (HazardDetection.io.out.PCen === 1.U && IDEX.io.out.opcode === "b1101111".U ) -> (PC), // this is the normal operation
-  ))
-
-/*  PC := MuxCase(0.U, Seq(
-    (PCMuxSel === 0.U) -> (PC + 4.U), // this is the normal operation
-    (PCMuxSel === 1.U) -> PC,     // dont increment
-    (PCMuxSel === 2.U) -> (decoder.io.imm << 1) //
-  ))
-*/
-
-  val ProgMem = Module(new Memory(ProgPath))
-
-
+  val branchTaken = Wire(Bool())
+  val branchTarget = Wire(UInt(32.W))
 
   // --- FETCH STAGE ---
-  ProgMem.io.instAddr := PC
-  val current_instr = ProgMem.io.inst
-  val current_pc    = PC
+  val PC = RegInit(0.U(32.W)) // BigInt("FFFFFFFC", 16)
+  val ProgMem = Module(new Memory(ProgPath))
 
+  val NextPC = MuxCase(PC, Seq(
+    (branchTaken) -> branchTarget,
+    (HazardDetection.io.out.PCen === 1.U) -> (PC + 4.U),
+  ))
 
+  ProgMem.io.instClear := HazardDetection.io.out.IFIDclear
+  ProgMem.io.instAddr := NextPC
+  PC := NextPC
 
   // --- IF/ID PIPELINE REGISTER --------------------------------------------------------
-  val IFID = Module(new IFID())
+  //val IFID = Module(new IFID())
+  // Memory is a part if the pipeline register
   // Update the register with values from Fetch stage
-  IFID.io.in.instruction := current_instr
-  IFID.io.in.pc          := current_pc
-  IFID.io.en := HazardDetection.io.out.IFIDen
-  IFID.io.clear := HazardDetection.io.out.IFIDclear
-
 
 
   // --- DECODE STAGE ---
   // Now you access them like this:
-  decoder.io.input := IFID.io.out.instruction
+  decoder.io.input := ProgMem.io.inst
 
 
   // Registers
@@ -73,8 +58,8 @@ class CPU(ProgPath: String) extends Module {
   IDEX.io.clear := HazardDetection.io.out.IDEXclear
   IDEX.io.in.rs1 := decoder.io.rs1
   IDEX.io.in.rs2 := decoder.io.rs2
-  IDEX.io.in.pc := IFID.io.out.pc
-  IDEX.io.in.instruction := IFID.io.out.instruction
+  IDEX.io.in.pc := PC
+  IDEX.io.in.instruction := ProgMem.io.inst
   IDEX.io.in.rs1Data := registers.io.rs1Data
   IDEX.io.in.rs2Data := registers.io.rs2Data
   IDEX.io.in.opcode := decoder.io.opcode
@@ -82,7 +67,7 @@ class CPU(ProgPath: String) extends Module {
   IDEX.io.in.regWrite := control.io.regWrite
   IDEX.io.in.loadedData := control.io.loadedData
 
-  HazardDetection.io.in.IFIDinstruction := IFID.io.out.instruction
+  HazardDetection.io.in.IFIDinstruction := ProgMem.io.inst
   HazardDetection.io.in.IDEXinstruction := IDEX.io.out.instruction
 
 
@@ -103,6 +88,7 @@ class CPU(ProgPath: String) extends Module {
 
 
   EXMEM.io.in.ra := IDEX.io.out.pc //+ 4.U
+  IDEX.io.in.ra := PC + 4.U
   //Jump signals
   when(IDEX.io.out.opcode === "b1101111".U){
     PC := (IDEX.io.out.pc + IDEX.io.out.imm).asUInt
@@ -120,17 +106,15 @@ class CPU(ProgPath: String) extends Module {
   }
 */
 
-  /*when(IDEX.io.out.opcode === "b1101111".U) {
     PC := MuxCase(0.U, Seq(
 
       // JAL target = PC + imm
-      (decoder.io.opcode === "b1101111".U) -> (IFID.io.out.pc + decoder.io.imm).asUInt,
+      (decoder.io.opcode === "b1101111".U) -> (PC + decoder.io.imm).asUInt,
 
       // JALR target = rs1 + imm
       (decoder.io.opcode === "b1100111".U) -> (decoder.io.rs1 + decoder.io.imm).asUInt
 
     ))
-  }*/
 
   // Forwarding begins
   // 00 = no forwarding
@@ -217,12 +201,13 @@ class CPU(ProgPath: String) extends Module {
   branches.io.a1 := rs2Forwarded
   branches.io.sel := IDEX.io.out.BranchCtrl
 
-  val branchTaken = IDEX.io.out.ControlBool && branches.io.out
-  val branchTarget = IDEX.io.out.pc + IDEX.io.out.imm
+  branchTaken := IDEX.io.out.ControlBool && branches.io.out
+  branchTarget := IDEX.io.out.pc + IDEX.io.out.imm
   HazardDetection.io.in.pcFromTakenBranch := branchTaken
   when(branchTaken){
     PC := branchTarget
   }
+
 
   // JUMP implementaion
  // when(IDEX.io.out.opcode === "b1101111".U){PC:= IDEX.io.out.targetAddress}
@@ -303,9 +288,6 @@ class CPU(ProgPath: String) extends Module {
     (MEMWB.io.out.opcode === "b0010011".U) -> true.B,  // SHIFT type
     (MEMWB.io.out.opcode === "b0110011".U) -> true.B   // ALU register - register type
   ))
-
-
-
 
 }
 
