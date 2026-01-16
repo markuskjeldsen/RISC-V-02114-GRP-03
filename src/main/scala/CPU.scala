@@ -204,7 +204,9 @@ class CPU(ProgPath: String) extends Module {
   val branchTaken = IDEX.io.out.ControlBool && branches.io.out
   val branchTarget = IDEX.io.out.pc + IDEX.io.out.imm
   HazardDetection.io.in.pcFromTakenBranch := branchTaken
-
+  when(branchTaken){
+    PC := branchTarget
+  }
 
   // JUMP implementaion
  // when(IDEX.io.out.opcode === "b1101111".U){PC:= IDEX.io.out.targetAddress}
@@ -213,11 +215,8 @@ class CPU(ProgPath: String) extends Module {
   // --- EX/MEM PIPELINE REGISTER --------------------------------------------------------
   EXMEM.io.en := 1.U
   EXMEM.io.clear := 0.U
-  when(branchTaken){
-    EXMEM.io.in.pc := branchTarget
-  }.otherwise{
-    EXMEM.io.in.pc := IDEX.io.out.pc
-  }
+  EXMEM.io.in.pc := IDEX.io.out.pc
+
   EXMEM.io.in.instruction := IDEX.io.out.instruction
   EXMEM.io.in.opcode := IDEX.io.out.opcode
   EXMEM.io.in.result := ALU.io.out
