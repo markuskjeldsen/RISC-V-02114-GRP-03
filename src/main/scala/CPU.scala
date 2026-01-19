@@ -27,14 +27,10 @@ class CPU(ProgPath: String) extends Module {
   val PC = RegInit(0.U(32.W)) // BigInt("FFFFFFFC", 16)
   val ProgMem = Module(new Memory(ProgPath))
 
-  val NextPC = MuxCase(PC, Seq(
-    (branchTaken) -> branchTarget,
-    (HazardDetection.io.out.PCen === 1.U) -> (PC + 4.U),
-  ))
+
 
   ProgMem.io.instClear := HazardDetection.io.out.IFIDclear
-  ProgMem.io.instAddr := NextPC
-  PC := NextPC
+  ProgMem.io.instAddr := PC
 
   // --- IF/ID PIPELINE REGISTER --------------------------------------------------------
   //val IFID = Module(new IFID())
@@ -90,31 +86,7 @@ class CPU(ProgPath: String) extends Module {
   EXMEM.io.in.ra := IDEX.io.out.pc //+ 4.U
   IDEX.io.in.ra := PC + 4.U
   //Jump signals
-  when(IDEX.io.out.opcode === "b1101111".U){
-    PC := (IDEX.io.out.pc + IDEX.io.out.imm).asUInt
-  }
-  when(IDEX.io.out.opcode === "b1100111".U) {
-    PC := (IDEX.io.out.rs1 + IDEX.io.out.imm).asUInt
-  }
- /* IDEX.io.in.ra := IFID.io.out.pc + 4.U
-  //Jump signals
-  when(decoder.io.opcode === "b1101111".U){
-    PC := (IFID.io.out.pc + decoder.io.imm).asUInt
-  }
-  when(decoder.io.opcode === "b1100111".U) {
-    PC := (decoder.io.rs1 + decoder.io.imm).asUInt
-  }
-*/
 
-    PC := MuxCase(0.U, Seq(
-
-      // JAL target = PC + imm
-      (decoder.io.opcode === "b1101111".U) -> (PC + decoder.io.imm).asUInt,
-
-      // JALR target = rs1 + imm
-      (decoder.io.opcode === "b1100111".U) -> (decoder.io.rs1 + decoder.io.imm).asUInt
-
-    ))
 
   // Forwarding begins
   // 00 = no forwarding
@@ -204,9 +176,33 @@ class CPU(ProgPath: String) extends Module {
   branchTaken := IDEX.io.out.ControlBool && branches.io.out
   branchTarget := IDEX.io.out.pc + IDEX.io.out.imm
   HazardDetection.io.in.pcFromTakenBranch := branchTaken
-  when(branchTaken){
-    PC := branchTarget
+
+
+  val isJAL  = IDEX.io.out.opcode === "b1101111".U
+  val isJALR = IDEX.io.out.opcode === "b1100111".U
+
+  val jumpTarget = Mux(
+    isJAL,
+    IDEX.io.out.pc + IDEX.io.out.imm,
+    (rs1Forwarded + IDEX.io.out.imm) & "hFFFFFFFE".U
+  )
+
+  val pcNext = Wire(UInt(32.W))
+
+  pcNext := PC + 4.U
+
+  when(!HazardDetection.io.out.PCen) {
+    pcNext := PC               // highest priority: stall
+  }.elsewhen(branchTaken) {
+    pcNext := branchTarget
+  }.elsewhen(isJAL || isJALR) {
+    pcNext := jumpTarget
   }
+
+  PC := pcNext
+
+
+
 
 
   // JUMP implementaion
