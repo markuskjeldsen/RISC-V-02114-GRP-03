@@ -51,7 +51,8 @@ class CPU(ProgPath: String) extends Module {
   // Instantiate pipeline registers
   // --- ID/EX PIPELINE REGISTER --------------------------------------------------------
   IDEX.io.en := HazardDetection.io.out.IDEXen
-  IDEX.io.clear := HazardDetection.io.out.IDEXclear
+  val idexClearFromHazard = HazardDetection.io.out.IDEXclear
+  IDEX.io.clear := idexClearFromHazard
   IDEX.io.in.rs1 := decoder.io.rs1
   IDEX.io.in.rs2 := decoder.io.rs2
   IDEX.io.in.pc := PC
@@ -60,6 +61,7 @@ class CPU(ProgPath: String) extends Module {
   IDEX.io.in.rs2Data := registers.io.rs2Data
   IDEX.io.in.opcode := decoder.io.opcode
   IDEX.io.in.imm := decoder.io.imm
+
   IDEX.io.in.regWrite := control.io.regWrite
   IDEX.io.in.loadedData := control.io.loadedData
 
@@ -83,7 +85,7 @@ class CPU(ProgPath: String) extends Module {
   IDEX.io.in.BranchCtrl := control.io.BranchCtrl
 
 
-  EXMEM.io.in.ra := IDEX.io.out.pc //+ 4.U
+  //EXMEM.io.in.ra := IDEX.io.out.pc //+ 4.U
   IDEX.io.in.ra := PC + 4.U
   //Jump signals
 
@@ -180,10 +182,11 @@ class CPU(ProgPath: String) extends Module {
 
   val isJAL  = IDEX.io.out.opcode === "b1101111".U
   val isJALR = IDEX.io.out.opcode === "b1100111".U
+  val jumpTaken = isJAL || isJALR
 
   val jumpTarget = Mux(
     isJAL,
-    IDEX.io.out.pc + IDEX.io.out.imm,
+    (IDEX.io.out.pc + IDEX.io.out.imm).asUInt,
     (rs1Forwarded + IDEX.io.out.imm) & "hFFFFFFFE".U
   )
 

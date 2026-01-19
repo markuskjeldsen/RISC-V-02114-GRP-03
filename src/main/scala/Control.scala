@@ -9,7 +9,7 @@ class Control() extends Module {
     val ALUsrc = Output(UInt(1.W))
     val ALUctrl = Output(UInt(4.W))
     val BranchCtrl = UInt(3.W)
-    val regWrite = Bool()
+    val regWrite = Output(Bool())
     val loadedData = Output(Bool())
   })
     io.ALUsrc := 0.U
@@ -25,11 +25,12 @@ class Control() extends Module {
     "b0110011".U -> true.B  // ALU reg
   ))
 
-  io.loadedData := false.B
+  io.loadedData := (io.opcode === "b0000011".U)
+  /*io.loadedData := false.B
   when(io.opcode === "b0000011".U) {
     io.loadedData := true.B
   }
-
+*/
 
   switch (io.opcode){
     is( "b0010011".U ) { // Integer register-immediate instructions
@@ -69,9 +70,11 @@ class Control() extends Module {
     }
     is("b0100011".U) { // Memory Store Instructions
       io.ALUsrc := 1.U // use imm
+      io.ALUctrl := 0.U
     }
     is("b0000011".U) { // Memory Load Instructions
       io.ALUsrc := 1.U // use imm
+      io.ALUctrl := 0.U
     }
 
     is("b1100011".U){ // Branches configuration
