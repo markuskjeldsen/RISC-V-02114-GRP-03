@@ -16,6 +16,8 @@ class IDEXBundle extends Bundle {
   val ALUctrl     = UInt(4.W)
   val ControlBool = Bool()
   val BranchCtrl = UInt(3.W)
+  val func7 = UInt(7.W)
+  val func3 = UInt(3.W)
   val ra = UInt(5.W)
  // val targetAddress = UInt(5.W)
   val regWrite = Bool()

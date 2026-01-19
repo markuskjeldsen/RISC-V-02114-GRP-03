@@ -32,16 +32,27 @@ class CPU(ProgPath: String) extends Module {
   ProgMem.io.instClear := HazardDetection.io.out.IFIDclear
   ProgMem.io.instAddr := PC
 
+  val fetchPCReg = RegNext(PC)
   // --- IF/ID PIPELINE REGISTER --------------------------------------------------------
   //val IFID = Module(new IFID())
   // Memory is a part if the pipeline register
   // Update the register with values from Fetch stage
 
+  val IFID_inst = RegInit(0.U(32.W))
+  val IFID_pc = RegInit(0.U(32.W))
+
+  when (HazardDetection.io.out.IFIDclear) {
+    IFID_inst := "h00000013".U // NOP
+    IFID_pc   := 0.U
+  }.elsewhen (HazardDetection.io.out.PCen) {
+    IFID_inst := ProgMem.io.inst
+    IFID_pc   := PC
+  }
+
 
   // --- DECODE STAGE ---
   // Now you access them like this:
-  decoder.io.input := ProgMem.io.inst
-
+  decoder.io.input := IFID_inst
 
   // Registers
   val registers = Module(new Registers())
@@ -55,12 +66,14 @@ class CPU(ProgPath: String) extends Module {
   IDEX.io.clear := idexClearFromHazard
   IDEX.io.in.rs1 := decoder.io.rs1
   IDEX.io.in.rs2 := decoder.io.rs2
-  IDEX.io.in.pc := PC
-  IDEX.io.in.instruction := ProgMem.io.inst
+  IDEX.io.in.pc := IFID_pc//PC
+  IDEX.io.in.instruction := IFID_inst//ProgMem.io.inst
   IDEX.io.in.rs1Data := registers.io.rs1Data
   IDEX.io.in.rs2Data := registers.io.rs2Data
   IDEX.io.in.opcode := decoder.io.opcode
   IDEX.io.in.imm := decoder.io.imm
+  IDEX.io.in.func3 := decoder.io.func3
+  IDEX.io.in.func7 := decoder.io.func7
 
   IDEX.io.in.regWrite := control.io.regWrite
   IDEX.io.in.loadedData := control.io.loadedData
@@ -146,13 +159,13 @@ class CPU(ProgPath: String) extends Module {
   val rs1Forwarded = MuxCase(IDEX.io.out.rs1Data, Seq(
     (forwardA === "b10".U) -> EXMEM.io.out.result,
     (forwardA === "b01".U) -> MEMWB.io.out.result, // Added comma
-    (forwardA === "b11".U) -> ProgMem.io.readData
+    (forwardA === "b11".U) -> MEMWB.io.out.memoryVal
   ))
 
   val rs2Forwarded = MuxCase(IDEX.io.out.rs2Data, Seq(
     (forwardB === "b10".U) -> EXMEM.io.out.result,
     (forwardB === "b01".U) -> MEMWB.io.out.result, // Added comma
-    (forwardB === "b11".U) -> ProgMem.io.readData
+    (forwardB === "b11".U) -> MEMWB.io.out.memoryVal
   ))
 
   val ALU = Module(new ALU())
@@ -190,17 +203,20 @@ class CPU(ProgPath: String) extends Module {
     (rs1Forwarded + IDEX.io.out.imm) & "hFFFFFFFE".U
   )
 
+  val redirectTaken = branchTaken || jumpTaken
+  val killFetchedInst = RegNext(redirectTaken, init = false.B)
+
+  IDEX.io.clear := idexClearFromHazard || killFetchedInst
+
+
+
+
+  val pcPlus4 = PC + 4.U
+
   val pcNext = Wire(UInt(32.W))
+  val pcHold = !HazardDetection.io.out.PCen
+  pcNext := Mux(pcHold, PC, Mux(jumpTaken, jumpTarget, Mux(branchTaken, branchTarget, pcPlus4)))
 
-  pcNext := PC + 4.U
-
-  when(!HazardDetection.io.out.PCen) {
-    pcNext := PC               // highest priority: stall
-  }.elsewhen(branchTaken) {
-    pcNext := branchTarget
-  }.elsewhen(isJAL || isJALR) {
-    pcNext := jumpTarget
-  }
 
   PC := pcNext
 
@@ -220,12 +236,13 @@ class CPU(ProgPath: String) extends Module {
   EXMEM.io.in.instruction := IDEX.io.out.instruction
   EXMEM.io.in.opcode := IDEX.io.out.opcode
   EXMEM.io.in.result := ALU.io.out
-  EXMEM.io.in.func3 := decoder.io.func3
-  EXMEM.io.in.func7 := decoder.io.func7
+
+  EXMEM.io.in.func3 := IDEX.io.out.func3
+  EXMEM.io.in.func7 := IDEX.io.out.func7
   EXMEM.io.in.rs2Data := rs2Forwarded
   EXMEM.io.in.rd := IDEX.io.out.instruction(11,7)
   EXMEM.io.in.regWrite := IDEX.io.out.regWrite
-  //EXMEM.io.in.ra := IDEX.io.out.ra
+  EXMEM.io.in.ra := IDEX.io.out.ra
   EXMEM.io.in.loadedData := IDEX.io.out.loadedData
 
   // --- MEMORY STAGE ---
@@ -259,7 +276,7 @@ class CPU(ProgPath: String) extends Module {
   // --- WRITE BACK ---
   // if we should write back then do it
 
-  registers.io.rd := MEMWB.io.out.instruction(11,7)
+  registers.io.rd := MEMWB.io.out.rd
 
   registers.io.rdData := MuxCase(0.U, Seq(
     // ALU & Immediate operations use the ALU result
