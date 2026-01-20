@@ -2,6 +2,14 @@ import chisel3.{RegInit, dontTouch, _}
 import chisel3.util._
 import pipelineregisters._
 
+
+object CPU extends App {
+  emitVerilog(
+    new CPU("src/test/scala/programs/Blink.hex"),
+    Array("--target-dir", "generated")
+  )
+}
+
 class CPU(ProgPath: String) extends Module {
   val io = IO(new Bundle {
     val regs = Output(Vec(32, UInt(32.W)))
