@@ -9,7 +9,7 @@ class CPUAUIPCTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.clock.setTimeout(0)
       dut.clock.step(10)
 
-      dut.io.regs(10).expect(BigInt("0000200c",16)) //Test AUIPC
+      dut.io.regs(10).expect(BigInt("00002008",16)) //Test AUIPC
 
     // AUIPC x10, 0x1
     // ADDI x11, x0, 0

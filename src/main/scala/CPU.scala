@@ -1,125 +1,93 @@
 import chisel3.{RegInit, dontTouch, _}
 import chisel3.util._
-
-// Import your custom package
 import pipelineregisters._
-
-
-// FETCH // DECODE // EXECUTE // MEMORY // WRITEBACK
 
 class CPU(ProgPath: String) extends Module {
   val io = IO(new Bundle {
-    val regs = Output(Vec(32,UInt(32.W)))
+    val regs = Output(Vec(32, UInt(32.W)))
   })
+
   val decoder = Module(new Decoder())
-
-  val IDEX = Module(new IDEX())
-  val EXMEM = Module(new EXMEM())
-  val MEMWB = Module(new MEMWB())
   val control = Module(new Control())
-
   val HazardDetection = Module(new HazardDetection())
 
-  val branchTaken = Wire(Bool())
-  val branchTarget = Wire(UInt(32.W))
+  val IDEX  = Module(new IDEX())
+  val EXMEM = Module(new EXMEM())
+  val MEMWB = Module(new MEMWB())
 
-  // --- FETCH STAGE ---
-  val PC = RegInit(0.U(32.W)) // BigInt("FFFFFFFC", 16)
   val ProgMem = Module(new Memory(ProgPath))
 
-  val NextPC = MuxCase(PC, Seq(
-    (branchTaken) -> branchTarget,
-    (HazardDetection.io.out.PCen === 1.U) -> (PC + 4.U),
-  ))
+  // ---------------------------
+  // PC + FETCH (SyncReadMem => 1-cycle instruction latency)
+  // ---------------------------
+  val PC = RegInit(0.U(32.W))
 
-  ProgMem.io.instClear := HazardDetection.io.out.IFIDclear
-  ProgMem.io.instAddr := NextPC
-  PC := NextPC
+  ProgMem.io.instAddr  := PC
+  ProgMem.io.instClear := false.B // flush is handled in IF/ID, not inside Memory
 
-  // --- IF/ID PIPELINE REGISTER --------------------------------------------------------
-  //val IFID = Module(new IFID())
-  // Memory is a part if the pipeline register
-  // Update the register with values from Fetch stage
+  // PC that corresponds to the instruction that arrives next cycle
+  val fetchPCReg = RegNext(PC)
 
+  // ---------------------------
+  // IF/ID pipeline registers
+  // ---------------------------
+  val IFID_inst = RegInit("h00000013".U(32.W)) // NOP
+  val IFID_pc   = RegInit(0.U(32.W))
 
-  // --- DECODE STAGE ---
-  // Now you access them like this:
-  decoder.io.input := ProgMem.io.inst
+  // Hazard unit inputs
+  HazardDetection.io.in.IFIDinstruction := IFID_inst
+  HazardDetection.io.in.IDEXinstruction := IDEX.io.out.instruction
 
+  // ---------------------------
+  // DECODE (use IF/ID regs)
+  // ---------------------------
+  decoder.io.input := IFID_inst
 
-  // Registers
   val registers = Module(new Registers())
   registers.io.rs1 := decoder.io.rs1
   registers.io.rs2 := decoder.io.rs2
   io.regs := registers.io.regs
-  // Instantiate pipeline registers
-  // --- ID/EX PIPELINE REGISTER --------------------------------------------------------
-  IDEX.io.en := HazardDetection.io.out.IDEXen
-  IDEX.io.clear := HazardDetection.io.out.IDEXclear
-  IDEX.io.in.rs1 := decoder.io.rs1
-  IDEX.io.in.rs2 := decoder.io.rs2
-  IDEX.io.in.pc := PC
-  IDEX.io.in.instruction := ProgMem.io.inst
-  IDEX.io.in.rs1Data := registers.io.rs1Data
-  IDEX.io.in.rs2Data := registers.io.rs2Data
-  IDEX.io.in.opcode := decoder.io.opcode
-  IDEX.io.in.imm := decoder.io.imm
-  IDEX.io.in.regWrite := control.io.regWrite
-  IDEX.io.in.loadedData := control.io.loadedData
-
-  HazardDetection.io.in.IFIDinstruction := ProgMem.io.inst
-  HazardDetection.io.in.IDEXinstruction := IDEX.io.out.instruction
-
-
-
-
-
 
   dontTouch(control.io)
   control.io.opcode := decoder.io.opcode
-  control.io.func3 := decoder.io.func3
-  control.io.func7 := decoder.io.func7
+  control.io.func3  := decoder.io.func3
+  control.io.func7  := decoder.io.func7
 
-// ALU signals
-  IDEX.io.in.ALUsrc := control.io.ALUsrc
-  IDEX.io.in.ALUctrl := control.io.ALUctrl
-  IDEX.io.in.ControlBool := (decoder.io.opcode === "b1100011".U)
-  IDEX.io.in.BranchCtrl := control.io.BranchCtrl
+  // ---------------------------
+  // ID/EX pipeline register
+  // ---------------------------
+  IDEX.io.en := HazardDetection.io.out.IDEXen && HazardDetection.io.out.PCen
 
+  val idexClearFromHazard = HazardDetection.io.out.IDEXclear
+  IDEX.io.clear := idexClearFromHazard
 
-  EXMEM.io.in.ra := IDEX.io.out.pc //+ 4.U
-  IDEX.io.in.ra := PC + 4.U
-  //Jump signals
-  when(IDEX.io.out.opcode === "b1101111".U){
-    PC := (IDEX.io.out.pc + IDEX.io.out.imm).asUInt
-  }
-  when(IDEX.io.out.opcode === "b1100111".U) {
-    PC := (IDEX.io.out.rs1 + IDEX.io.out.imm).asUInt
-  }
- /* IDEX.io.in.ra := IFID.io.out.pc + 4.U
-  //Jump signals
-  when(decoder.io.opcode === "b1101111".U){
-    PC := (IFID.io.out.pc + decoder.io.imm).asUInt
-  }
-  when(decoder.io.opcode === "b1100111".U) {
-    PC := (decoder.io.rs1 + decoder.io.imm).asUInt
-  }
-*/
+  IDEX.io.in.rs1         := decoder.io.rs1
+  IDEX.io.in.rs2         := decoder.io.rs2
+  IDEX.io.in.pc          := IFID_pc
+  IDEX.io.in.instruction := IFID_inst
+  IDEX.io.in.rs1Data     := registers.io.rs1Data
+  IDEX.io.in.rs2Data     := registers.io.rs2Data
+  IDEX.io.in.opcode      := decoder.io.opcode
+  IDEX.io.in.imm         := decoder.io.imm
 
-    PC := MuxCase(0.U, Seq(
+  IDEX.io.in.regWrite   := control.io.regWrite
+  IDEX.io.in.loadedData := control.io.loadedData
 
-      // JAL target = PC + imm
-      (decoder.io.opcode === "b1101111".U) -> (PC + decoder.io.imm).asUInt,
+  IDEX.io.in.ALUsrc      := control.io.ALUsrc
+  IDEX.io.in.ALUctrl     := control.io.ALUctrl
+  IDEX.io.in.ControlBool := (decoder.io.opcode === "b1100011".U) // isBranch
+  IDEX.io.in.BranchCtrl  := control.io.BranchCtrl
 
-      // JALR target = rs1 + imm
-      (decoder.io.opcode === "b1100111".U) -> (decoder.io.rs1 + decoder.io.imm).asUInt
+  // return address for JAL/JALR
+  IDEX.io.in.ra := IFID_pc + 4.U
 
-    ))
-
-  // Forwarding begins
-  // 00 = no forwarding
-  // 10 = from EX/MEM
-  // 01 = from MEM/WB
+  // ---------------------------
+  // Forwarding
+  // 00 = none
+  // 10 = EX/MEM
+  // 01 = MEM/WB result
+  // 11 = MEM/WB load data (memoryVal)
+  // ---------------------------
   val forwardA = Wire(UInt(2.W))
   val forwardB = Wire(UInt(2.W))
   forwardA := "b00".U
@@ -152,48 +120,45 @@ class CPU(ProgPath: String) extends Module {
   }
 
   when(MEMWB.io.out.regWrite && MEMWB.io.out.loadedData &&
-      MEMWB.io.out.rd =/= 0.U &&
-      !(EXMEM.io.out.regWrite && EXMEM.io.out.rd === IDEX.io.out.rs1) &&
-      MEMWB.io.out.rd === IDEX.io.out.rs1) {
+    MEMWB.io.out.rd =/= 0.U &&
+    !(EXMEM.io.out.regWrite && EXMEM.io.out.rd === IDEX.io.out.rs1) &&
+    MEMWB.io.out.rd === IDEX.io.out.rs1) {
     forwardA := "b11".U
   }
 
   when(MEMWB.io.out.regWrite && MEMWB.io.out.loadedData &&
-      MEMWB.io.out.rd =/= 0.U &&
-      !(EXMEM.io.out.regWrite && EXMEM.io.out.rd === IDEX.io.out.rs2) &&
-      MEMWB.io.out.rd === IDEX.io.out.rs2) {
+    MEMWB.io.out.rd =/= 0.U &&
+    !(EXMEM.io.out.regWrite && EXMEM.io.out.rd === IDEX.io.out.rs2) &&
+    MEMWB.io.out.rd === IDEX.io.out.rs2) {
     forwardB := "b11".U
   }
 
-
-  // --- EXECUTE STAGE ---
-  // here we execute with the ALU
-  // Forwarded register operands
   val rs1Forwarded = MuxCase(IDEX.io.out.rs1Data, Seq(
     (forwardA === "b10".U) -> EXMEM.io.out.result,
-    (forwardA === "b01".U) -> MEMWB.io.out.result, // Added comma
-    (forwardA === "b11".U) -> ProgMem.io.readData
+    (forwardA === "b01".U) -> MEMWB.io.out.result,
+    (forwardA === "b11".U) -> MEMWB.io.out.memoryVal
   ))
 
   val rs2Forwarded = MuxCase(IDEX.io.out.rs2Data, Seq(
     (forwardB === "b10".U) -> EXMEM.io.out.result,
-    (forwardB === "b01".U) -> MEMWB.io.out.result, // Added comma
-    (forwardB === "b11".U) -> ProgMem.io.readData
+    (forwardB === "b01".U) -> MEMWB.io.out.result,
+    (forwardB === "b11".U) -> MEMWB.io.out.memoryVal
   ))
 
+  // ---------------------------
+  // EXECUTE
+  // ---------------------------
   val ALU = Module(new ALU())
+
+  // AUIPC uses the PC of the instruction (from IDEX)
   val ALUa = Mux(
     IDEX.io.out.opcode === "b0010111".U, // AUIPC
-    IDEX.io.out.pc,                     // use PC
-    rs1Forwarded                        // forwarded rs1
+    IDEX.io.out.pc,
+    rs1Forwarded
   )
+
   ALU.io.a0 := ALUa
-  ALU.io.a1 := MuxCase(0.U, Seq(
-    (IDEX.io.out.ALUsrc === 0.U) -> rs2Forwarded,
-    (IDEX.io.out.ALUsrc === 1.U) -> IDEX.io.out.imm
-  ))
-  //ALU.io.a1 := IDEX_reg.imm // only for now, add a mux here later
-  //ALU.io.sel := 0.U
+  ALU.io.a1 := Mux(IDEX.io.out.ALUsrc === 1.U, IDEX.io.out.imm, rs2Forwarded)
   ALU.io.sel := IDEX.io.out.ALUctrl
 
   val branches = Module(new Branches())
@@ -201,95 +166,124 @@ class CPU(ProgPath: String) extends Module {
   branches.io.a1 := rs2Forwarded
   branches.io.sel := IDEX.io.out.BranchCtrl
 
-  branchTaken := IDEX.io.out.ControlBool && branches.io.out
+  val branchTaken  = Wire(Bool())
+  val branchTarget = Wire(UInt(32.W))
+  branchTaken  := IDEX.io.out.ControlBool && branches.io.out
   branchTarget := IDEX.io.out.pc + IDEX.io.out.imm
+
   HazardDetection.io.in.pcFromTakenBranch := branchTaken
-  when(branchTaken){
-    PC := branchTarget
+
+  // ---------------------------
+  // Jump resolution in EX
+  // ---------------------------
+  val exIsJal  = (IDEX.io.out.opcode === "b1101111".U)
+  val exIsJalr = (IDEX.io.out.opcode === "b1100111".U)
+  val exJumpTaken = exIsJal || exIsJalr
+
+  val exJumpTarget = Mux(
+    exIsJal,
+    (IDEX.io.out.pc + IDEX.io.out.imm).asUInt,
+    ((rs1Forwarded + IDEX.io.out.imm) & (~1.U(32.W))).asUInt
+  )
+
+  // ---------------------------
+  // kill fetched instruction after redirect (SyncReadMem imem)
+  // ---------------------------
+  val redirectTaken   = branchTaken || exJumpTaken
+  val killFetchedInst = RegNext(redirectTaken, init = false.B)
+
+  // ---------------------------
+  // IF/ID update (stall + flush + killFetchedInst bubble)
+  // ---------------------------
+  when(HazardDetection.io.out.IFIDen) {
+    when(killFetchedInst || HazardDetection.io.out.IFIDclear) {
+      IFID_inst := "h00000013".U
+      IFID_pc   := fetchPCReg
+    }.otherwise {
+      IFID_inst := ProgMem.io.inst
+      IFID_pc   := fetchPCReg
+    }
   }
 
+  // ---------------------------
+  // Single PC update
+  // ---------------------------
+  val pcPlus4 = PC + 4.U
+  val pcHold  = !HazardDetection.io.out.PCen
 
-  // JUMP implementaion
- // when(IDEX.io.out.opcode === "b1101111".U){PC:= IDEX.io.out.targetAddress}
+  val nextPC = Mux(
+    pcHold,
+    PC,
+    Mux(
+      exJumpTaken,
+      exJumpTarget,
+      Mux(
+        branchTaken,
+        branchTarget,
+        pcPlus4
+      )
+    )
+  )
 
+  PC := nextPC
 
-  // --- EX/MEM PIPELINE REGISTER --------------------------------------------------------
-  EXMEM.io.en := 1.U
-  EXMEM.io.clear := 0.U
-  EXMEM.io.in.pc := IDEX.io.out.pc
+  // ---------------------------
+  // EX/MEM pipeline register
+  // ---------------------------
+  EXMEM.io.en    := true.B
+  EXMEM.io.clear := false.B
 
+  EXMEM.io.in.pc          := IDEX.io.out.pc
   EXMEM.io.in.instruction := IDEX.io.out.instruction
-  EXMEM.io.in.opcode := IDEX.io.out.opcode
-  EXMEM.io.in.result := ALU.io.out
-  EXMEM.io.in.func3 := decoder.io.func3
-  EXMEM.io.in.func7 := decoder.io.func7
-  EXMEM.io.in.rs2Data := rs2Forwarded
-  EXMEM.io.in.rd := IDEX.io.out.instruction(11,7)
-  EXMEM.io.in.regWrite := IDEX.io.out.regWrite
-  //EXMEM.io.in.ra := IDEX.io.out.ra
-  EXMEM.io.in.loadedData := IDEX.io.out.loadedData
+  EXMEM.io.in.opcode      := IDEX.io.out.opcode
+  EXMEM.io.in.result      := ALU.io.out
 
-  // --- MEMORY STAGE ---
-  // here we ask the memory for information
+  EXMEM.io.in.func3 := IDEX.io.out.instruction(14, 12)
+  EXMEM.io.in.func7 := IDEX.io.out.instruction(31, 25)
 
-  ProgMem.io.rs2Data := EXMEM.io.out.rs2Data
+  EXMEM.io.in.rs2Data     := rs2Forwarded
+  EXMEM.io.in.rd          := IDEX.io.out.instruction(11, 7)
+  EXMEM.io.in.regWrite    := IDEX.io.out.regWrite
+  EXMEM.io.in.ra          := IDEX.io.out.ra
+  EXMEM.io.in.loadedData  := IDEX.io.out.loadedData
+
+  // ---------------------------
+  // MEMORY stage
+  // ---------------------------
+  ProgMem.io.rs2Data  := EXMEM.io.out.rs2Data
   ProgMem.io.dataAddr := EXMEM.io.out.result
-  ProgMem.io.func3 := EXMEM.io.out.func3
-  ProgMem.io.opcode := EXMEM.io.out.opcode
+  ProgMem.io.func3    := EXMEM.io.out.func3
+  ProgMem.io.opcode   := EXMEM.io.out.opcode
 
+  // ---------------------------
+  // MEM/WB pipeline register
+  // ---------------------------
+  MEMWB.io.en    := true.B
+  MEMWB.io.clear := false.B
 
-
-  // --- MEM/WB PIPELINE REGISTER --------------------------------------------------------
-  MEMWB.io.en := 1.U
-  MEMWB.io.clear := 0.U
-  MEMWB.io.in.pc := EXMEM.io.out.pc
+  MEMWB.io.in.pc          := EXMEM.io.out.pc
   MEMWB.io.in.instruction := EXMEM.io.out.instruction
-  MEMWB.io.in.opcode := EXMEM.io.out.opcode
-  MEMWB.io.in.result := EXMEM.io.out.result
-  MEMWB.io.in.memoryVal := ProgMem.io.readData // placeholder the memory controller hasnt been implemented yet
-  MEMWB.io.in.func3 := EXMEM.io.out.func3
-  MEMWB.io.in.func7 := EXMEM.io.out.func7
-  MEMWB.io.in.rd := EXMEM.io.out.rd
-  MEMWB.io.in.regWrite := EXMEM.io.out.regWrite
-  MEMWB.io.in.ra := EXMEM.io.out.ra
-  MEMWB.io.in.loadedData := EXMEM.io.out.loadedData
+  MEMWB.io.in.opcode      := EXMEM.io.out.opcode
+  MEMWB.io.in.result      := EXMEM.io.out.result
+  MEMWB.io.in.memoryVal   := ProgMem.io.readData
+  MEMWB.io.in.func3       := EXMEM.io.out.func3
+  MEMWB.io.in.func7       := EXMEM.io.out.func7
+  MEMWB.io.in.rd          := EXMEM.io.out.rd
+  MEMWB.io.in.regWrite    := EXMEM.io.out.regWrite
+  MEMWB.io.in.ra          := EXMEM.io.out.ra
+  MEMWB.io.in.loadedData  := EXMEM.io.out.loadedData
 
+  // ---------------------------
+  // WRITEBACK
+  // ---------------------------
+  registers.io.rd := MEMWB.io.out.rd
 
-
-
-  // --- WRITE BACK ---
-  // if we should write back then do it
-
-  registers.io.rd := MEMWB.io.out.instruction(11,7)
-
-  registers.io.rdData := MuxCase(0.U, Seq(
-    // ALU & Immediate operations use the ALU result
-    (MEMWB.io.out.opcode === "b0110111".U) -> MEMWB.io.out.result, //MEMWB_reg.imm,       // LUI (usually just the immediate)
-    (MEMWB.io.out.opcode === "b0010111".U) -> MEMWB.io.out.result,           // AUIPC
-    (MEMWB.io.out.opcode === "b0010011".U) -> MEMWB.io.out.result,           // ALU Imm / Shift
-    (MEMWB.io.out.opcode === "b0110011".U) -> MEMWB.io.out.result,           // ALU Reg
-
-    // Jump instructions write the return address (PC + 4)
-    (MEMWB.io.out.opcode === "b1101111".U) -> (MEMWB.io.out.ra), //MEMWB.io.out.pc),             // JAL
-    (MEMWB.io.out.opcode === "b1100111".U) -> (MEMWB.io.out.ra), //MEMWB.io.out.pc + 4.U),             // JALR
-
-    // Load instructions use the data from memory
-    (MEMWB.io.out.opcode === "b0000011".U) -> ProgMem.io.readData              // Load must be the actual data because data is one cycle late
+  val wbData = MuxCase(MEMWB.io.out.result, Seq(
+    (MEMWB.io.out.opcode === "b1101111".U) -> MEMWB.io.out.ra,
+    (MEMWB.io.out.opcode === "b1100111".U) -> MEMWB.io.out.ra,
+    (MEMWB.io.out.opcode === "b0000011".U) -> MEMWB.io.out.memoryVal
   ))
 
-
-  registers.io.regWrite := MuxCase(false.B, Seq(
-    (MEMWB.io.out.opcode === "b0110111".U) -> true.B,  // LUI type
-    (MEMWB.io.out.opcode === "b0010111".U) -> true.B,  // AUIPC type
-    (MEMWB.io.out.opcode === "b1101111".U) -> true.B,  // JAL type
-    (MEMWB.io.out.opcode === "b1100111".U) -> true.B,  // JALR type
-    (MEMWB.io.out.opcode === "b0000011".U) -> true.B,  // MEMORY load type
-    (MEMWB.io.out.opcode === "b0010011".U) -> true.B,  // ALU register - immediate type
-    (MEMWB.io.out.opcode === "b0010011".U) -> true.B,  // SHIFT type
-    (MEMWB.io.out.opcode === "b0110011".U) -> true.B   // ALU register - register type
-  ))
-
+  registers.io.rdData   := wbData
+  registers.io.regWrite := MEMWB.io.out.regWrite
 }
-
-
-
