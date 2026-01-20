@@ -12,8 +12,8 @@ object CPU extends App {
 
 class CPU(ProgPath: String, debug : Boolean ) extends Module {
   val io = IO(new Bundle {
-    //val regs = if (debug) Some(Output(Vec(32, UInt(32.W)))) else None
-      val led = Output(Bool())
+    val regs = if (debug) Some(Output(Vec(32, UInt(32.W)))) else None
+    val led = Output(Bool())
   })
 
   val decoder = Module(new Decoder())
@@ -58,8 +58,16 @@ class CPU(ProgPath: String, debug : Boolean ) extends Module {
 
 
 
-  //io.regs := registers.io.regs
-    io.led := registers.io.regs(7)(0)
+
+
+  // "If regs exists, connect it, otherwise, do nothing."
+  // Option B: The "Explicit" way
+  if (debug) {
+    io.regs.get := registers.io.regs
+  }
+
+
+  io.led := registers.io.regs(7)(0)
 
   dontTouch(control.io)
   control.io.opcode := decoder.io.opcode

@@ -3,13 +3,13 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class CPUJalrTest extends AnyFlatSpec with ChiselScalatestTester {
   "CPUJalrTest" should "pass" in {
-    test(new CPU("src/test/scala/programs/Jalr.hex")).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
+    test(new CPU("src/test/scala/programs/Jalr.hex",true)).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       // Increase timeout to inf cycles
       dut.clock.setTimeout(0)
       dut.clock.step(30)
 
-      dut.io.regs(5).expect(BigInt("00000001",16)) //Test Jalr
-      dut.io.regs(6).expect(BigInt("0000002a",16)) //Test Jal
+      dut.io.regs.get(5).expect(BigInt("00000001",16)) //Test Jalr
+      dut.io.regs.get(6).expect(BigInt("0000002a",16)) //Test Jal
 
       //_start:
       //# Clear registers

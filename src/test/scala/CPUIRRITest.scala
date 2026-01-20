@@ -3,28 +3,28 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class CPUIRRITest extends AnyFlatSpec with ChiselScalatestTester {
   "CPUIRRITest" should "pass" in {
-    test(new CPU("src/test/scala/programs/CPUIRRI.hex")).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
+    test(new CPU("src/test/scala/programs/CPUIRRI.hex",true)).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       // Increase timeout to inf cycles
       dut.clock.setTimeout(0)
       dut.clock.step(23)
-      dut.io.regs(1).expect(5)
-      dut.io.regs(2).expect(3)
-      dut.io.regs(3).expect(8)
-      dut.io.regs(4).expect(2)
+      dut.io.regs.get(1).expect(5)
+      dut.io.regs.get(2).expect(3)
+      dut.io.regs.get(3).expect(8)
+      dut.io.regs.get(4).expect(2)
       //dut.io.regs(5).expect(40) //?
-      dut.io.regs(6).expect(0)
-      dut.io.regs(7).expect(0)
-      dut.io.regs(8).expect(6)
-      dut.io.regs(9).expect(0)
-      dut.io.regs(10).expect(0)
-      dut.io.regs(11).expect(7)
-      dut.io.regs(12).expect(1)
-      dut.io.regs(13).expect(BigInt("FFFFFFF8", 16))
-      dut.io.regs(14).expect(1)
-      dut.io.regs(15).expect(1)
-      dut.io.regs(16).expect(0) //SLTU Forwarding not working
-      dut.io.regs(17).expect(BigInt("FFFFFFFC", 16)) //SRA Forwarding not working
-      dut.io.regs(18).expect(BigInt("7FFFFFFC", 16)) //SRL Forwarding not working
+      dut.io.regs.get(6).expect(0)
+      dut.io.regs.get(7).expect(0)
+      dut.io.regs.get(8).expect(6)
+      dut.io.regs.get(9).expect(0)
+      dut.io.regs.get(10).expect(0)
+      dut.io.regs.get(11).expect(7)
+      dut.io.regs.get(12).expect(1)
+      dut.io.regs.get(13).expect(BigInt("FFFFFFF8", 16))
+      dut.io.regs.get(14).expect(1)
+      dut.io.regs.get(15).expect(1)
+      dut.io.regs.get(16).expect(0) //SLTU Forwarding not working
+      dut.io.regs.get(17).expect(BigInt("FFFFFFFC", 16)) //SRA Forwarding not working
+      dut.io.regs.get(18).expect(BigInt("7FFFFFFC", 16)) //SRL Forwarding not working
 
       //addi x1,  x0, 5
       //addi x2,  x0, 3

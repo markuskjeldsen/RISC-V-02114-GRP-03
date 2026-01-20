@@ -3,7 +3,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class CPUAddiTest extends AnyFlatSpec with ChiselScalatestTester {
   "CPUAddi" should "pass" in {
-    test(new CPU("src/test/scala/programs/addi.hex")).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
+    test(new CPU("src/test/scala/programs/addi.hex", true)).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       // Increase timeout to inf cycles
       dut.clock.setTimeout(0)
       dut.clock.step(7)
@@ -15,7 +15,7 @@ class CPUAddiTest extends AnyFlatSpec with ChiselScalatestTester {
       // addi x0, x0, 0
       // addi x0, x0, 0
       // this program adds 30 and 34 into register x10
-      dut.io.regs(10).expect(64)
+      dut.io.regs.get(10).expect(64)
 
       dut.clock.step(4)
       // addi x10, x0, -30
@@ -26,7 +26,7 @@ class CPUAddiTest extends AnyFlatSpec with ChiselScalatestTester {
       // addi x0, x0, 0
       // addi x0, x0, 0
       // this program adds -30 and -34 into register x10
-      dut.io.regs(10).expect(BigInt("FFFFFFC0", 16))
+      dut.io.regs.get(10).expect(BigInt("FFFFFFC0", 16))
     }
   }
 }
