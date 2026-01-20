@@ -5,14 +5,15 @@ import pipelineregisters._
 
 object CPU extends App {
   emitVerilog(
-    new CPU("src/test/scala/programs/Blink.hex"),
+    new CPU("src/test/scala/programs/Blink.hex",true),
     Array("--target-dir", "generated")
   )
 }
 
-class CPU(ProgPath: String) extends Module {
+class CPU(ProgPath: String, debug : Boolean ) extends Module {
   val io = IO(new Bundle {
-    val regs = Output(Vec(32, UInt(32.W)))
+    //val regs = if (debug) Some(Output(Vec(32, UInt(32.W)))) else None
+      val led = Output(Bool())
   })
 
   val decoder = Module(new Decoder())
@@ -54,7 +55,11 @@ class CPU(ProgPath: String) extends Module {
   val registers = Module(new Registers())
   registers.io.rs1 := decoder.io.rs1
   registers.io.rs2 := decoder.io.rs2
-  io.regs := registers.io.regs
+
+
+
+  //io.regs := registers.io.regs
+    io.led := registers.io.regs(7)(0)
 
   dontTouch(control.io)
   control.io.opcode := decoder.io.opcode
