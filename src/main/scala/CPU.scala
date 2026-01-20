@@ -16,46 +16,39 @@ class CPU(ProgPath: String) extends Module {
 
 
   val PC = RegInit(0.U(32.W))
+  val NextPC = Wire(UInt(32.W))
+  PC := NextPC
   val HazardDetection = Module(new HazardDetection())
 
-
-
-  PC := MuxCase(0.U, Seq(
-    (HazardDetection.io.out.PCen === 1.U) -> (PC + 4.U), // this is the normal operation
-    (HazardDetection.io.out.PCen === 0.U) -> PC,     // dont increment
-  ))
-
-/*  PC := MuxCase(0.U, Seq(
-    (PCMuxSel === 0.U) -> (PC + 4.U), // this is the normal operation
-    (PCMuxSel === 1.U) -> PC,     // dont increment
-    (PCMuxSel === 2.U) -> (decoder.io.imm << 1) //
-  ))
-*/
+  NextPC := PC + 4.U // the default behaviour
+  // Override if a hazard is detected
+  when(HazardDetection.io.out.PCen === 0.U) {
+    NextPC := PC
+  }
 
   val ProgMem = Module(new Memory(ProgPath))
 
-
-
   // --- FETCH STAGE ---
-  ProgMem.io.instAddr := PC
+  ProgMem.io.instAddr := NextPC
   val current_instr = ProgMem.io.inst
-  val current_pc    = PC
-
 
 
   // --- IF/ID PIPELINE REGISTER --------------------------------------------------------
   val IFID = Module(new IFID())
   // Update the register with values from Fetch stage
-  IFID.io.in.instruction := current_instr
-  IFID.io.in.pc          := current_pc
+  IFID.io.in.pc          := NextPC
+  ProgMem.io.insten := HazardDetection.io.out.IFIDen
+  ProgMem.io.instclear := HazardDetection.io.out.IFIDclear
+  val IFIDPC = Mux(HazardDetection.io.out.IFIDclear,0.U,IFID.io.out.pc)
+
   IFID.io.en := HazardDetection.io.out.IFIDen
-  IFID.io.clear := HazardDetection.io.out.IFIDclear
+  IFID.io.clear := 0.U //HazardDetection.io.out.IFIDclear
 
 
 
   // --- DECODE STAGE ---
   // Now you access them like this:
-  decoder.io.input := IFID.io.out.instruction
+  decoder.io.input := current_instr //IFID.io.out.instruction
 
 
   // Registers
@@ -73,8 +66,8 @@ class CPU(ProgPath: String) extends Module {
   IDEX.io.clear := HazardDetection.io.out.IDEXclear
   IDEX.io.in.rs1 := decoder.io.rs1
   IDEX.io.in.rs2 := decoder.io.rs2
-  IDEX.io.in.pc := IFID.io.out.pc
-  IDEX.io.in.instruction := IFID.io.out.instruction
+  IDEX.io.in.pc := IFIDPC //IFID.io.out.pc
+  IDEX.io.in.instruction := current_instr //IFID.io.out.instruction
   IDEX.io.in.rs1Data := registers.io.rs1Data
   IDEX.io.in.rs2Data := registers.io.rs2Data
   IDEX.io.in.opcode := decoder.io.opcode
@@ -82,7 +75,7 @@ class CPU(ProgPath: String) extends Module {
   IDEX.io.in.regWrite := control.io.regWrite
   IDEX.io.in.loadedData := control.io.loadedData
 
-  HazardDetection.io.in.IFIDinstruction := IFID.io.out.instruction
+  HazardDetection.io.in.IFIDinstruction := current_instr // IFID.io.out.instruction
   HazardDetection.io.in.IDEXinstruction := IDEX.io.out.instruction
 
 
@@ -101,20 +94,6 @@ class CPU(ProgPath: String) extends Module {
   IDEX.io.in.ControlBool := (decoder.io.opcode === "b1100011".U)
   IDEX.io.in.BranchCtrl := control.io.BranchCtrl
 
-  IDEX.io.in.ra := IFID.io.out.pc + 4.U
-  //Jump signals
-  when(IDEX.io.out.opcode === "b1101111".U) {
-
-    PC := MuxCase(0.U, Seq(
-
-      // JAL target = PC + imm
-      (decoder.io.opcode === "b1101111".U) -> (IFID.io.out.pc + decoder.io.imm).asUInt,
-
-      // JALR target = rs1 + imm
-      (decoder.io.opcode === "b1100111".U) -> (decoder.io.rs1 + decoder.io.imm).asUInt
-
-    ))
-  }
 
   // Forwarding begins
   // 00 = no forwarding
@@ -206,9 +185,20 @@ class CPU(ProgPath: String) extends Module {
   HazardDetection.io.in.pcFromTakenBranch := branchTaken
 
 
-  // JUMP implementaion
- // when(IDEX.io.out.opcode === "b1101111".U){PC:= IDEX.io.out.targetAddress}
+  IDEX.io.in.ra := 4.U + IFIDPC//IFID.io.out.pc
+  //Jump signals
 
+  switch(IDEX.io.out.opcode) {
+    // JAL target = PC + imm
+    is("b1101111".U) { NextPC := IDEX.io.out.pc + IDEX.io.out.imm }
+    // JALR target = rs1 + imm
+    is("b1100111".U) { NextPC := ((IDEX.io.out.rs1Data + IDEX.io.out.imm) & ~1.U) }
+    // branch opcode
+    is("b1100011".U) { NextPC := branchTarget}
+  }
+
+
+  // JUMP implementaion
 
   // --- EX/MEM PIPELINE REGISTER --------------------------------------------------------
   EXMEM.io.en := 1.U

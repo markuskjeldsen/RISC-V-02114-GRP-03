@@ -4,8 +4,11 @@ import chisel3.util.experimental.loadMemoryFromFile
 
 class Memory(ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 4096) extends Module {
   val io = IO(new Bundle {
-    val instAddr = Input(UInt(32.W))
-    val inst     = Output(UInt(32.W))
+    val instAddr  = Input(UInt(32.W))
+    val inst      = Output(UInt(32.W))
+    val insten    = Input(Bool())   // Connect to IFIDen
+    val instclear = Input(Bool())  // Connect to IFIDclear
+
 
     // Data memory
     val dataAddr = Input(UInt(32.W))
@@ -23,7 +26,16 @@ class Memory(ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 409
 
   // We don't need an extra Reg here if we want 1-cycle latency
   // instAddr -> iMem -> io.inst (available next cycle)
-  io.inst := iMem.read(io.instAddr(31, 2), true.B)
+
+  // 1. STALL: Pass the enable signal here.
+  // If en is false, the memory output remains unchanged.
+  val raw_inst = iMem.read(io.instAddr(31, 2), io.insten)
+
+  // 2. FLUSH: Use a Mux to force a NOP if clear is high.
+  // Note: Since SyncReadMem is synchronous, if you flush on the same cycle
+
+  io.inst := Mux(io.instclear, 0.U, raw_inst) // insert a nop
+
 
   // --- Data Memory (DMEM) ---
   val dMem = SyncReadMem(dataMemWords, Vec(4, UInt(8.W)))

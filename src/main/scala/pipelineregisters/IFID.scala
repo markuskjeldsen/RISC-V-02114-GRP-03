@@ -4,7 +4,6 @@ import chisel3._
 import chisel3.util._ // Included for extra utilities if needed
 
 class IFIDBundle extends Bundle {
-  val instruction = UInt(32.W)
   val pc          = UInt(32.W)
 }
 

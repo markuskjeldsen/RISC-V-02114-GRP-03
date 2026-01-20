@@ -118,7 +118,18 @@ class Decoder() extends Module {
       io.rs2 := io.input(24,20)
       io.rs1 := io.input(19,15)
       io.func3 := io.input(14,12)
-      val rawImm = Cat(io.input(31), io.input(7), io.input(30,25), io.input(11,8))
+
+      // 1. Extract bits according to spec
+      // 2. Append a "0".U constant to the end (bit 0)
+      val rawImm = Cat(
+        io.input(31),     // imm[12]
+        io.input(7),      // imm[11]
+        io.input(30, 25), // imm[10:5]
+        io.input(11, 8),  // imm[4:1]
+        0.U(1.W)          // imm[0] (Always zero)
+      )
+
+      // 3. Sign extend from the 13th bit (bit index 12) to 32 bits
       io.imm := rawImm.asSInt.pad(32).asUInt
     }
     is("b0110111".U){//LUI instruction
@@ -129,15 +140,31 @@ class Decoder() extends Module {
       io.rd := io.input(11,7)
       io.imm := Cat(io.input(31,12),0.U(12.W))
     }
-    is("b1101111".U){// JAL
-      val rawImm = Cat(io.input(31), io.input(21,12),io.input(22), io.input(30,23))
+    is("b1101111".U) { // JAL (Jump and Link)
+      // rd is at io.input(11, 7) - ensure your decoder handles this
+      io.rd := io.input(11,7)
+
+      val rawImm = Cat(
+        io.input(31),        // imm[20]
+        io.input(19, 12),    // imm[19:12]
+        io.input(20),        // imm[11]
+        io.input(30, 21),    // imm[10:1]
+        0.U(1.W)             // imm[0] (Implicit zero)
+      )
+
+      // Sign extend from the 21st bit to 32 bits
       io.imm := rawImm.asSInt.pad(32).asUInt
     }
-    is("b1100111".U){ // JALR
-      io.rd := io.input(11,7)
-      io.func3 := io.input(14,12)
-      io.rs1 := io.input(19,15)
-      io.imm := io.input(31,20)
+
+    is("b1100111".U) { // JALR
+      io.rd    := io.input(11, 7)
+      io.func3 := io.input(14, 12)
+      io.rs1   := io.input(19, 15)
+
+      // I-type immediate (12 bits: 31 down to 20)
+      // Must be sign-extended to 32 bits!
+      val rawImm = io.input(31, 20)
+      io.imm := rawImm.asSInt.pad(32).asUInt
     }
 
 
