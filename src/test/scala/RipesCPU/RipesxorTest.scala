@@ -6,9 +6,10 @@ class RipesxorTest extends AnyFlatSpec with ChiselScalatestTester {
     test(new CPU("src/test/scala/RipesTestPrograms/Ripesxor.hex",true)).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       // Increase timeout to inf cycles
       dut.clock.setTimeout(0)
-      dut.clock.step(100)
+      dut.clock.step(80)
 
 
     }
   }
 }
+

@@ -6,7 +6,7 @@ class RipesOriTest extends AnyFlatSpec with ChiselScalatestTester {
     test(new CPU("src/test/scala/RipesTestPrograms/RipesOri.hex",true)).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       // Increase timeout to inf cycles
       dut.clock.setTimeout(0)
-      dut.clock.step(65)
+      dut.clock.step(66)
 
 
     }

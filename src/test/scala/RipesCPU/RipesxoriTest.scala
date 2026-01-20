@@ -12,3 +12,4 @@ class RipesxoriTest extends AnyFlatSpec with ChiselScalatestTester {
     }
   }
 }
+
