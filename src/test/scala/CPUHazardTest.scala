@@ -13,6 +13,7 @@ class CPUHazardTest extends AnyFlatSpec with ChiselScalatestTester {
             // addi x0, x0, 0
             // sw x10, -4(sp)
             // addi x0, x0, 0
+
             // addi x0, x0, 0
             // addi x0, x0, 0
             // lw x10, -4(sp) it should stall here
