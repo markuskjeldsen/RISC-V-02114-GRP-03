@@ -22,7 +22,7 @@ class CPU(ProgPath: String) extends Module {
 
   NextPC := PC + 4.U // the default behaviour
   // Override if a hazard is detected
-  when(HazardDetection.io.out.PCen === 0.U) {
+  when(HazardDetection.io.out.PCen === 0.U || HazardDetection.io.out.IFIDen === 0.U) {
     NextPC := PC
   }
 
