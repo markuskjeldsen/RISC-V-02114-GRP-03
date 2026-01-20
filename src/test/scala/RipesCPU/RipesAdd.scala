@@ -1,4 +1,4 @@
-import chiseltest.{ChiselScalatestTester, WriteVcdAnnotation}
+import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
 
 class RipesAdd extends AnyFlatSpec with ChiselScalatestTester {
