@@ -6,7 +6,7 @@ class Branches() extends Module {
     val sel  = Input(UInt(3.W)) //funct3
     val a0   = Input(UInt(32.W)) //rs1 value
     val a1   = Input(UInt(32.W)) //rs2 value
-    val out = Output(Bool()) //branch taken?
+    val out = Output(Bool()) //branch taken
   })
 
   io.out := 0.B

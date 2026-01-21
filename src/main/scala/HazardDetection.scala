@@ -8,8 +8,6 @@ class HazardDetection extends Module {
       val IFIDinstruction  = UInt(32.W)
       val IDEXinstruction  = UInt(32.W)
 
-      // OPTIONAL: Usually you simply take the boolean result from the Branch Unit
-      // false = PC+4, true = Branch Target
       val pcFromTakenBranch = Bool()
     })
 
@@ -18,17 +16,17 @@ class HazardDetection extends Module {
       val IFIDclear = Bool() // Flush bit
 
       val IDEXen    = Bool()
-      val IDEXclear = Bool() // Flush bit (insert bubble)
+      val IDEXclear = Bool() // Flush bit
 
       val PCen      = Bool()
     })
   })
 
-  // 1. Extract Fields from IF/ID (Current Instruction in Decode)
+  // 1. Extract Fields from IF/ID
   val rs1_addr_IFID = io.in.IFIDinstruction(19, 15)
   val rs2_addr_IFID = io.in.IFIDinstruction(24, 20)
 
-  // 2. Extract Fields from ID/EX (Previous Instruction in Execute)
+  // 2. Extract Fields from ID/EX
   val rd_addr_IDEX  = io.in.IDEXinstruction(11, 7)
   val opcode_IDEX   = io.in.IDEXinstruction(6, 0)
 
