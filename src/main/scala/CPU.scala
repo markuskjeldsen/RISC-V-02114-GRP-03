@@ -5,10 +5,7 @@ import pipelineregisters._
 
 
 object CPU extends App {
-  emitVerilog(
-    new CPU("src/test/scala/programs/Blink.hex",false),
-    Array("--target-dir", "generated")
-  )
+  (new ChiselStage).emitVerilog(new CPU("src/test/scala/programs/Blink.hex",true), Array("--target-dir", "generated"))
 }
 
 class CPU(ProgPath: String, debug : Boolean ) extends Module {
