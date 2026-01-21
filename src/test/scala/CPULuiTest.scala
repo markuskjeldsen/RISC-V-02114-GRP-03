@@ -11,26 +11,23 @@ class CPULuiTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.regs.get(12).expect(BigInt("0000a002",16)) //Test LUI
 
       //_start:
-      //# Clear registers
-      //  addi x1, x0, 0      # ra = 0
-      //addi x5, x0, 0      # t0 = 0 (status)
+      //  addi x1, x0, 0
+      //addi x5, x0, 0
 
-      //# Call function using JAL
       //  jal  x1, jal_target
       //addi x0, x0, 0
       //addi x0, x0, 0
 
-      //addi x5, x0, 1      #Here if jalr works
+      //addi x5, x0, 1
 
       //end:
-      //  jal x0, end               #infinite loop
+      //  jal x0, end
       //  addi x0, x0, 0
       //addi x0, x0, 0
 
       //jal_target:
-      //  addi x6, x0, 42     #Here if jal works
+      //  addi x6, x0, 42
 
-      //#Return
       //jalr x0, x1, 0
 
 

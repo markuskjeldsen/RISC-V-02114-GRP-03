@@ -8,7 +8,7 @@ class RipesOrTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.clock.setTimeout(0)
       dut.clock.step(95)
 
-      dut.io.regs.get(10).expect(0) //Test Blink
+      dut.io.regs.get(10).expect(0)
 
     }
   }

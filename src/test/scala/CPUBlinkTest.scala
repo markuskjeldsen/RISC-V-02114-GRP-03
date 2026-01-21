@@ -11,7 +11,7 @@ class CPUBlinkTest extends AnyFlatSpec with ChiselScalatestTester {
 
       dut.io.regs.get(7).expect(BigInt("00000001",16)) //Test Blink
 
-      //addi x2, x0, 0x100     # <-- IMPORTANT: give x2 a valid RAM base in your design
+      //addi x2, x0, 0x100
       //addi x5, x0, 0x020
       //addi x6, x0, 0
       //addi x7, x0, 0
