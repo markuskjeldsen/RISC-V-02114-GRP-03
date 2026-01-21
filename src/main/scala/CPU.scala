@@ -15,7 +15,7 @@ class CPU(ProgPath: String) extends Module {
 
 
 
-  val PC = RegInit(0.U(32.W))
+  val PC = RegInit((-4).S(32.W).asUInt)
   val NextPC = Wire(UInt(32.W))
   PC := NextPC
   val HazardDetection = Module(new HazardDetection())
@@ -36,9 +36,9 @@ class CPU(ProgPath: String) extends Module {
   // --- IF/ID PIPELINE REGISTER --------------------------------------------------------
   val IFID = Module(new IFID())
   // Update the register with values from Fetch stage
-  IFID.io.in.pc          := NextPC
+  IFID.io.in.pc     := NextPC
   ProgMem.io.insten := HazardDetection.io.out.IFIDen
-  ProgMem.io.instclear := HazardDetection.io.out.IFIDclear
+  ProgMem.io.instclear := (HazardDetection.io.out.IFIDclear || PC === (-4).S.asUInt)
   val IFIDPC = Mux(HazardDetection.io.out.IFIDclear,0.U,IFID.io.out.pc)
 
   IFID.io.en := HazardDetection.io.out.IFIDen
