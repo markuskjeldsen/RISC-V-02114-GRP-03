@@ -1,4 +1,4 @@
-import chisel3.{RegInit, dontTouch, _}
+import chisel3.{RegInit, _}
 import chisel3.util._
 import pipelineregisters._
 
@@ -69,7 +69,6 @@ class CPU(ProgPath: String, debug : Boolean ) extends Module {
 
   io.led := registers.io.regs(7)(0)
 
-  dontTouch(control.io)
   control.io.opcode := decoder.io.opcode
   control.io.func3  := decoder.io.func3
   control.io.func7  := decoder.io.func7
