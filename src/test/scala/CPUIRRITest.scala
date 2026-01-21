@@ -22,9 +22,9 @@ class CPUIRRITest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.regs.get(13).expect(BigInt("FFFFFFF8", 16))
       dut.io.regs.get(14).expect(1)
       dut.io.regs.get(15).expect(1)
-      dut.io.regs.get(16).expect(0) //SLTU Forwarding not working
-      dut.io.regs.get(17).expect(BigInt("FFFFFFFC", 16)) //SRA Forwarding not working
-      dut.io.regs.get(18).expect(BigInt("7FFFFFFC", 16)) //SRL Forwarding not working
+      dut.io.regs.get(16).expect(0)
+      dut.io.regs.get(17).expect(BigInt("FFFFFFFC", 16))
+      dut.io.regs.get(18).expect(BigInt("7FFFFFFC", 16))
 
       //addi x1,  x0, 5
       //addi x2,  x0, 3

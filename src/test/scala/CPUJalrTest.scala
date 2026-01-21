@@ -12,22 +12,18 @@ class CPUJalrTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.regs.get(6).expect(BigInt("0000002a",16)) //Test Jal
 
       //_start:
-      //# Clear registers
-      //  addi x1, x0, 0      # ra = 0
-      //addi x5, x0, 0      # t0 = 0 (status)
+      //  addi x1, x0, 0
+      //addi x5, x0, 0
 
-      //# Call function using JAL
       //  jal  x1, jal_target
 
-      //# If return works, execution resumes here
-      //addi x5, x0, 1      # t0 = 1 (PASS)
+      //addi x5, x0, 1
 
       //end:
-      //  j end               # infinite loop
+      //  j end
 
       //jal_target:
-      //# If we reach here, JAL jump worked
-      //addi x6, x0, 42     # t1 = 42 (marker)
+      //addi x6, x0, 42
 
       //# Return to caller
       //jalr x0, x1, 0
