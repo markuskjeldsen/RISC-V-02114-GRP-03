@@ -52,6 +52,11 @@ class CPU(ProgPath: String, debug : Boolean ) extends Module {
   // ---------------------------
   decoder.io.input := IFID_inst
 
+  when(decoder.io.isEcall) {
+    printf("ECALL encountered at PC = 0x%x\n", IFID_pc)
+    stop()
+  }
+
   val registers = Module(new Registers())
   registers.io.rs1 := decoder.io.rs1
   registers.io.rs2 := decoder.io.rs2
