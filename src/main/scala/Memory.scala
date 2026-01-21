@@ -21,11 +21,41 @@ class Memory(ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 409
   // ---------------------------
   // Instruction memory (SYNC)  <-- KEEP THIS SYNC for your CPU fetch alignment
   // ---------------------------
-  val iMem = SyncReadMem(instMemWords, UInt(32.W))
-  loadMemoryFromFile(iMem, ProgPath)
+  //val iMem = SyncReadMem(instMemWords, UInt(32.W))
+  //loadMemoryFromFile(iMem, ProgPath)
 
   // 1-cycle latency instruction fetch (CPU already compensates with fetchPCReg)
-  io.inst := iMem.read(io.instAddr(31, 2), true.B)
+  //io.inst := iMem.read(io.instAddr(31, 2), true.B)
+val array = new Array[Int](24)
+  array(0) = 0x10000113
+  array(1) = 0x1d000293
+  array(2) = 0x00000313
+  array(3) = 0x00000393
+  array(4) = 0x00000413
+  array(5) = 0x00000493
+  array(6) = 0x00628863
+  array(7) = 0x00130313
+  array(8) = 0x00000013
+  array(9) = 0xfe000ae3
+  array(10) = 0x00828863
+  array(11) = 0x00140413
+  array(12) = 0x00000013
+  array(13) = 0xfe000ae3
+  array(14) = 0x00928863
+  array(15) = 0x00148493
+  array(16) = 0x00000013
+  array(17) = 0xfe000ae3
+  array(18) = 0x00000313
+  array(19) = 0x00000413
+  array(20) = 0x00000493
+  array(21) = 0x00138393
+  array(22) = 0xfe712e23
+  array(23) = 0xfa000ee3
+
+  val instructionMem = VecInit(array.toIndexedSeq.map(_.S(32.W).asUInt))
+  io.inst := instructionMem(io.instAddr(31,2))
+
+
 
   // ---------------------------
   // Data memory (COMBINATIONAL READ for 5-stage)

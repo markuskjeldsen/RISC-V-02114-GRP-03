@@ -5,7 +5,7 @@ import pipelineregisters._
 
 
 object CPU extends App {
-  (new ChiselStage).emitVerilog(new CPU("src/test/scala/programs/Blink.hex",true), Array("--target-dir", "generated"))
+  (new ChiselStage).emitVerilog(new CPU("src/test/scala/programs/Blink.hex",false), Array("--target-dir", "generated"))
 }
 
 class CPU(ProgPath: String, debug : Boolean ) extends Module {
@@ -82,14 +82,14 @@ class CPU(ProgPath: String, debug : Boolean ) extends Module {
   io.out(5) := PC(21)
   io.out(6) := PC(22)
   io.out(7) := PC(23)
-  io.out(8) := PC(24)
-  io.out(9) := PC(25)
-  io.out(10) := PC(26)
-  io.out(11) := PC(27)
-  io.out(12) := PC(28)
-  io.out(13) := PC(29)
-  io.out(14) := PC(30)
-  io.out(15) := PC(31)
+  io.out(8) := registers.io.regs(7)(0)
+  io.out(9) := registers.io.regs(7)(1)
+  io.out(10) := registers.io.regs(7)(2)
+  io.out(11) := registers.io.regs(7)(3)
+  io.out(12) := registers.io.regs(7)(4)
+  io.out(13) := registers.io.regs(7)(5)
+  io.out(14) := registers.io.regs(7)(6)
+  io.out(15) := registers.io.regs(7)(7)
 
   control.io.opcode := decoder.io.opcode
   control.io.func3  := decoder.io.func3
