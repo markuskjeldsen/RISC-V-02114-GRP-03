@@ -1,6 +1,6 @@
 import chisel3._
 import chisel3.util._
-import chisel3.util.experimental.loadMemoryFromFile
+import chisel3.util.experimental.loadMemoryFromFileInline
 
 class Memory(ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 4096) extends Module {
   val io = IO(new Bundle {
@@ -22,7 +22,7 @@ class Memory(ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 409
   // Instruction memory (SYNC)  <-- KEEP THIS SYNC for your CPU fetch alignment
   // ---------------------------
   val iMem = SyncReadMem(instMemWords, UInt(32.W))
-  loadMemoryFromFile(iMem, ProgPath)
+  loadMemoryFromFileInline(iMem, ProgPath)
 
   // 1-cycle latency instruction fetch (CPU already compensates with fetchPCReg)
   io.inst := iMem.read(io.instAddr(31, 2), true.B)
