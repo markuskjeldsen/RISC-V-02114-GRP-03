@@ -5,7 +5,7 @@ import pipelineregisters._
 
 object CPU extends App {
   emitVerilog(
-    new CPU("src/test/scala/programs/Blink.hex",true),
+    new CPU("src/test/scala/programs/Blink.hex",false),
     Array("--target-dir", "generated")
   )
 }
@@ -13,7 +13,8 @@ object CPU extends App {
 class CPU(ProgPath: String, debug : Boolean ) extends Module {
   val io = IO(new Bundle {
     val regs = if (debug) Some(Output(Vec(32, UInt(32.W)))) else None
-    val led = Output(Bool())
+    //val led = Output(Bool())
+    val out = Output(Vec(16,UInt(1.W)))
   })
 
   val decoder = Module(new Decoder())
@@ -72,7 +73,25 @@ class CPU(ProgPath: String, debug : Boolean ) extends Module {
   }
 
 
-  io.led := registers.io.regs(7)(0)
+  //io.led := registers.io.regs(7)(0)
+
+  //io.out :=PC(31,15)
+  io.out(0) := PC(16)
+  io.out(1) := PC(17)
+  io.out(2) := PC(18)
+  io.out(3) := PC(19)
+  io.out(4) := PC(20)
+  io.out(5) := PC(21)
+  io.out(6) := PC(22)
+  io.out(7) := PC(23)
+  io.out(8) := PC(24)
+  io.out(9) := PC(25)
+  io.out(10) := PC(26)
+  io.out(11) := PC(27)
+  io.out(12) := PC(28)
+  io.out(13) := PC(29)
+  io.out(14) := PC(30)
+  io.out(15) := PC(31)
 
   control.io.opcode := decoder.io.opcode
   control.io.func3  := decoder.io.func3
