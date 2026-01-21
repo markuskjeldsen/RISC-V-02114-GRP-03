@@ -74,14 +74,14 @@ class CPU(ProgPath: String, debug : Boolean ) extends Module {
   //io.led := registers.io.regs(7)(0)
 
   //io.out :=PC(31,15)
-  io.out(0) := PC(16)
-  io.out(1) := PC(17)
-  io.out(2) := PC(18)
-  io.out(3) := PC(19)
-  io.out(4) := PC(20)
-  io.out(5) := PC(21)
-  io.out(6) := PC(22)
-  io.out(7) := PC(23)
+  io.out(0) := PC(0)
+  io.out(1) := PC(1)
+  io.out(2) := PC(2)
+  io.out(3) := PC(3)
+  io.out(4) := PC(4)
+  io.out(5) := PC(5)
+  io.out(6) := PC(6)
+  io.out(7) := PC(7)
   io.out(8) := registers.io.regs(7)(0)
   io.out(9) := registers.io.regs(7)(1)
   io.out(10) := registers.io.regs(7)(2)
@@ -89,7 +89,7 @@ class CPU(ProgPath: String, debug : Boolean ) extends Module {
   io.out(12) := registers.io.regs(7)(4)
   io.out(13) := registers.io.regs(7)(5)
   io.out(14) := registers.io.regs(7)(6)
-  io.out(15) := registers.io.regs(7)(7)
+  io.out(15) := registers.io.regs(7)(14)
 
   control.io.opcode := decoder.io.opcode
   control.io.func3  := decoder.io.func3
