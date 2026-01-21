@@ -1,13 +1,11 @@
+import chisel3.stage.ChiselStage
 import chisel3.{RegInit, _}
 import chisel3.util._
 import pipelineregisters._
 
 
 object CPU extends App {
-  emitVerilog(
-    new CPU("src/test/scala/programs/Blink.hex",true),
-    Array("--target-dir", "generated")
-  )
+  (new ChiselStage).emitVerilog(new CPU("src/test/scala/programs/Blink.hex",true), Array("--target-dir", "generated"))
 }
 
 class CPU(ProgPath: String, debug : Boolean ) extends Module {
