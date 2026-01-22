@@ -26,7 +26,7 @@ class Memory(ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 409
 
   // 1-cycle latency instruction fetch (CPU already compensates with fetchPCReg)
   //io.inst := iMem.read(io.instAddr(31, 2), true.B)
-val array = new Array[Int](12)
+val array = new Array[Int](18)
   array(0) = 0x10000113
   array(1) = 0x7ff00293
   array(2) = 0x00000313
