@@ -29,7 +29,7 @@ class Memory(ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 409
 val array = new Array[Int](18)
   array(0) = 0x10000113
   array(1) = 0x7ff00293
-  array(2) = 0x00e29293
+  array(2) = 0x00b29293
   array(3) = 0x00000313
   array(4) = 0x00100393
   array(5) = 0x00000413
