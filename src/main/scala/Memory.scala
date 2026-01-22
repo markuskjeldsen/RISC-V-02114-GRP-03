@@ -44,7 +44,8 @@ val array = new Array[Int](18)
   array(14) = 0x00940463
   array(15) = 0xfe0000e3
   array(16) = 0x00138393
-  array(17) = 0xfc000ce3
+  array(17) = 0x00000413
+  array(18) = 0xfc000ae3
 
 
   val instructionMem = VecInit(array.toIndexedSeq.map(_.S(32.W).asUInt))
