@@ -28,17 +28,25 @@ class Memory(ProgPath: String, instMemWords: Int = 4096, dataMemWords: Int = 409
   //io.inst := iMem.read(io.instAddr(31, 2), true.B)
 val array = new Array[Int](12)
   array(0) = 0x10000113
-  array(1) = 0x40000293
+  array(1) = 0x7ff00293
   array(2) = 0x00000313
-  array(3) = 0x00000393
-  array(4) = 0x00628863
-  array(5) = 0x00130313
-  array(6) = 0x00000013
-  array(7) = 0xfe000ae3
-  array(8) = 0x00000313
-  array(9) = 0x00138393
-  array(10) = 0xfe712e23
-  array(11) = 0xfe0002e3
+  array(3) = 0x00100393
+  array(4) = 0x00000413
+  array(5) = 0x01000493
+  array(6) = 0x00628863
+  array(7) = 0x00130313
+  array(8) = 0x00000013
+  array(9) = 0xfe000ae3
+  array(10) = 0x00000313
+  array(11) = 0x00139393
+  array(12) = 0x00140413
+  array(13) = 0x00140413
+  array(14) = 0x00940463
+  array(15) = 0xfe0000e3
+  array(16) = 0x00138393
+  array(17) = 0xfc000ce3
+
+
 
   val instructionMem = VecInit(array.toIndexedSeq.map(_.S(32.W).asUInt))
   io.inst := instructionMem(io.instAddr(31,2))

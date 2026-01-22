@@ -26,7 +26,7 @@ class CPU(ProgPath: String, debug : Boolean ) extends Module {
   val ProgMem = Module(new Memory(ProgPath))
 
   // ---------------------------
-  // PC + FETCH (SyncReadMem => 1-cycle instruction latency)
+  // PC + FETCH
   // ---------------------------
   val PC = RegInit(0.U(32.W))
 
